@@ -1,3 +1,25 @@
+/**
+ * TLS Audit Dashboard | Data Loader Module
+ * ------------------------------------------------------------
+ * Purpose:
+ * - Read Excel workbooks in the browser using SheetJS.
+ * - Detect the likely header row from known TLS/HRA column aliases.
+ * - Auto-map required and optional columns where possible.
+ * - Normalize raw worksheet rows into stable dashboard records.
+ * - Apply small data-safety guards before values are rendered/exported.
+ *
+ * Study Notes:
+ * - This module intentionally exposes one global object: window.TLSDataLoader.
+ * - dashboard.js consumes TLSDataLoader.loadFile(), inspectSheet(), convert(), and quality().
+ * - clean() and normalize() reduce variation in spreadsheet headers before matching.
+ * - safeCell() prefixes spreadsheet formula-like values to reduce CSV/Excel formula injection risk.
+ * - dateMeta() derives year, quarter, month, and sortable date metadata from the source date text.
+ *
+ * Boundary:
+ * - This module does not render UI.
+ * - This module does not upload files.
+ * - This module does not confirm legal/audit status beyond what exists in the selected workbook.
+ */
 (function(global){'use strict';
 const REQUIRED={auditDate:['Audit Date','วันที่ตรวจประเมิน'],site:['Audited Site / Department','สถานประกอบการ / หน่วยงานที่รับการตรวจ'],classification:['NC Classification','ระดับข้อบกพร่อง'],cb:['Certification Body (CB) / Audit Firm','หน่วยรับรอง / บริษัทผู้ตรวจประเมิน']};
 const OPTIONAL={ref:['NC / CAR Ref. No.','เลขที่อ้างอิง NC / CAR'],ba:['Business Area (BA)','กลุ่มธุรกิจ (BA)'],bu:['Business Unit (BU)','หน่วยธุรกิจ (BU)'],auditType:['Audit Type','ประเภทการตรวจประเมิน'],criteria:['Audit Criteria / Reference Standard','เกณฑ์การตรวจ / มาตรฐานอ้างอิง'],finding:['Audit Finding / NC Description','รายละเอียดข้อบกพร่องที่ตรวจพบ'],evidence:['Objective Evidence / NC Summary','หลักฐานเชิงประจักษ์ / สรุปข้อบกพร่อง'],legal:['Related Legal / Other Requirement','กฎหมายหรือข้อกำหนดอื่นที่เกี่ยวข้อง'],legalRef:['Legal Reference (Section / Clause / Article)','มาตรา / ข้อ / บทที่อ้างอิง'],auditors:['Auditor(s)','ผู้ตรวจประเมิน'],dueDate:['Corrective Action Due Date','กำหนดแล้วเสร็จการแก้ไข'],remarks:['Remarks','หมายเหตุ']};
