@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Executive Interactive Dashboard ผลการตรวจประเมินมาตรฐานแรงงานไทยจาก CBs</title>
+  <meta name="description" content="Private prototype สำหรับวิเคราะห์ผลการตรวจประเมินมาตรฐานแรงงานไทยจากไฟล์ Excel ภายใน Browser">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="theme-color" content="#002333">
+  <meta property="og:title" content="Executive Interactive Dashboard ผลการตรวจประเมินมาตรฐานแรงงานไทยจาก CBs">
+  <meta property="og:description" content="Private prototype. ข้อมูลประมวลผลภายใน Browser และไม่ Upload ไป Server">
+  <meta property="og:type" content="website">
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <link rel="stylesheet" href="assets/css/print.css" media="print">
+  <script src="https://code.jquery.com/jquery-4.0.0.min.js" integrity="sha384-fgGyf7Mo7DURSOMnOy7ed+dkq5Job205Gnzu6QIg0BOHKaqt4D76Dt8VlDCzcMHV" crossorigin="anonymous" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" integrity="sha384-hfkuqrKeWFmnTMWN31VWyoe8xgdTADD11kgxmdpx2uyE6j5Az5uZq6u6AKYYmAOw" crossorigin="anonymous" defer></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
+  <script src="assets/vendor/jquery/jquery-4.0.0.min.js" defer></script>
+  <script src="assets/vendor/chartjs/chart.umd.min.js" defer></script>
+  <script src="assets/vendor/sheetjs/xlsx.full.min.js" defer></script>
+  <script src="assets/js/data-loader.js" defer></script>
+  <script src="assets/js/dashboard.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main-content">ข้ามไปเนื้อหาหลัก</a>
+<header class="site-header">
+  <section>
+    <p class="eyebrow">PRIVATE PROTOTYPE • CPF / HR / HRA</p>
+    <h1>Executive Interactive Dashboard ผลการตรวจประเมินมาตรฐานแรงงานไทยจาก CBs</h1>
+    <p>Prototype สำหรับการทดสอบ ไม่ใช่ระบบ Production</p>
+  </section>
+  <aside class="header-meta" aria-label="ข้อมูลชุดข้อมูล">
+    <p>ข้อมูลล่าสุด: <time id="latest-date">รอเลือกไฟล์</time></p>
+    <p>Refresh: <time id="refresh-time">รอเลือกไฟล์</time></p>
+    <p><span id="record-count">0</span> Records</p>
+  </aside>
+</header>
+<nav class="toolbar" aria-label="การนำเข้าและคำสั่งหลัก">
+  <label class="file-button" for="excel-file">เลือกไฟล์ Excel</label>
+  <input id="excel-file" type="file" accept=".xlsx,.xls" aria-describedby="privacy-note">
+  <label for="sheet-select">Sheet</label><select id="sheet-select" disabled><option>รอเลือกไฟล์</option></select>
+  <button id="load-sheet" type="button" disabled>อ่าน Sheet</button>
+  <button id="reset-all" type="button" class="secondary">กลับสู่ภาพรวม</button>
+  <button id="export-csv" type="button" class="secondary" disabled>Export CSV</button>
+  <button id="print-summary" type="button" class="secondary">Export PDF</button>
+  <span id="privacy-note" class="privacy-note">ไฟล์ประมวลผลใน Browser และไม่ถูก Upload</span>
+</nav>
+<div id="status-message" class="status-message" role="status" aria-live="polite">กรุณาเลือกไฟล์ Excel เพื่อเริ่มต้น</div>
+<main id="main-content" tabindex="-1">
+  <aside class="filter-panel" aria-labelledby="filter-title">
+    <h2 id="filter-title">Global Filters</h2>
+    <p class="helper">กด Ctrl/Cmd เพื่อเลือกหลายค่า</p>
+    <form id="filters"></form>
+    <section aria-labelledby="active-title"><h3 id="active-title">ตัวกรองที่กำลังใช้</h3><div id="active-filters">ทั้งหมด</div></section>
+  </aside>
+  <div class="dashboard-content">
+    <section class="summary-card" aria-labelledby="summary-title">
+      <h2 id="summary-title">Executive Summary</h2>
+      <p id="executive-summary">รอการนำเข้าข้อมูลจาก Excel</p>
+      <p id="decision-note" class="decision-note"></p>
+    </section>
+    <section aria-labelledby="kpi-title"><h2 id="kpi-title" class="section-title">Executive KPIs</h2><div id="kpi-grid" class="kpi-grid"></div></section>
+    <section class="chart-grid" aria-label="กราฟเชิงบริหาร">
+      <figure class="chart-card"><header><h2 id="trend-title">แนวโน้ม Findings</h2><div><button type="button" class="view-toggle" data-view="month">เดือน</button><button type="button" class="view-toggle" data-view="quarter">ไตรมาส</button></div></header><div class="canvas-wrap"><canvas id="trend-chart" width="640" height="320" aria-label="กราฟแนวโน้ม Findings" role="img"></canvas></div><figcaption id="trend-caption">รอข้อมูล</figcaption><div id="trend-alt" class="sr-only"></div></figure>
+      <figure class="chart-card"><header><h2 id="cb-title">Findings แยกตาม CB</h2><button id="cb-drill" type="button">Drill-down</button></header><div class="canvas-wrap"><canvas id="cb-chart" width="640" height="320" aria-label="กราฟ Findings แยกตาม CB" role="img"></canvas></div><figcaption id="cb-caption">รอข้อมูล</figcaption><div id="cb-alt" class="sr-only"></div></figure>
+      <figure class="chart-card"><header><h2 id="classification-title">สัดส่วนระดับข้อบกพร่อง</h2><button id="classification-toggle" type="button">จำนวน</button></header><div class="canvas-wrap"><canvas id="classification-chart" width="640" height="320" aria-label="กราฟสัดส่วนระดับข้อบกพร่อง" role="img"></canvas></div><figcaption id="classification-caption">รอข้อมูล</figcaption><div id="classification-alt" class="sr-only"></div></figure>
+      <figure class="chart-card"><header><h2 id="pareto-title">Pareto กฎหมายและข้อกำหนด</h2><button id="pareto-sort" type="button">มาก → น้อย</button></header><div class="canvas-wrap scrollable"><canvas id="pareto-chart" width="900" height="320" aria-label="กราฟ Pareto กฎหมายและข้อกำหนด" role="img"></canvas></div><figcaption id="pareto-caption">รอข้อมูล</figcaption><div id="pareto-alt" class="sr-only"></div></figure>
+    </section>
+    <section class="alerts-card" aria-labelledby="alerts-title"><h2 id="alerts-title">ประเด็นที่ต้องติดตาม</h2><p>ใช้ Major/Minor ตามข้อมูลจริงเท่านั้น ไม่สร้างระดับความเสี่ยงเพิ่มเติม</p><div id="alerts-list"></div></section>
+    <section class="table-card" aria-labelledby="detail-title"><header><div><h2 id="detail-title">รายละเอียดผลการตรวจ</h2><p>คลิกแถวเพื่อเปิดรายละเอียดราย Record</p></div><label for="table-search">ค้นหา</label><input id="table-search" type="search" placeholder="Site, CB, Finding..."><label for="page-size">ต่อหน้า</label><select id="page-size"><option>10</option><option>20</option><option>50</option></select></header><div class="table-scroll"><table><caption>รายละเอียดผลการตรวจที่ตรงกับตัวกรอง</caption><thead id="detail-head"></thead><tbody id="detail-body"></tbody></table></div><footer><span id="page-info">0 รายการ</span><button id="page-prev" type="button">ก่อนหน้า</button><button id="page-next" type="button">ถัดไป</button></footer></section>
+    <section class="methodology" aria-labelledby="method-title"><h2 id="method-title">Methodology และข้อจำกัด</h2><ul><li>ใช้ข้อมูลจาก Sheet ที่เลือกในไฟล์ Excel เท่านั้น</li><li>ไม่มี Province/Region, Pass/Fail, Certificate Expiry, Responsible Person และ Closure Date จึงไม่สร้าง Map, Pass Rate, Certificate Aging หรือ Risk Matrix</li><li>ค่า Open หมายถึงไม่พบคำว่า Closed ใน Remarks ไม่ได้ยืนยันสถานะกระบวนการอย่างเป็นทางการ</li></ul></section>
+  </div>
+</main>
+<dialog id="mapping-dialog"><form method="dialog"><h2>Column Mapping</h2><p>จับคู่คอลัมน์ที่จำเป็น หากระบบตรวจหัวตารางอัตโนมัติไม่ได้</p><div id="mapping-fields"></div><menu><button value="cancel">ยกเลิก</button><button id="apply-mapping" value="default">นำไปใช้</button></menu></form></dialog>
+<dialog id="detail-dialog"><article><header><h2 id="detail-dialog-title">รายละเอียด Record</h2><button id="close-detail" type="button" aria-label="ปิด">×</button></header><div id="detail-dialog-body"></div></article></dialog>
+<footer class="site-footer"><p>PRIVATE PROTOTYPE • noindex, nofollow • ห้ามเผยแพร่ข้อมูลภายในโดยไม่ได้รับอนุญาต</p></footer>
+<noscript><p class="error-state">Dashboard ต้องใช้ JavaScript กรุณาเปิดใช้งาน JavaScript ใน Browser</p></noscript>
+</body></html>
