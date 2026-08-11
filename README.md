@@ -1,11 +1,12 @@
-# TLS Audit Dashboard
+# Project TLS8001 — Audit Dashboard Demo
 
-> **Executive Interactive Dashboard for TLS 8001 / Human Resource Audit (HRA)**  
-> วิเคราะห์ผลการตรวจประเมินมาตรฐานแรงงานไทยจากไฟล์ Excel ภายใน Browser โดยไม่อัปโหลดข้อมูลไปยัง Server
+> **Professional GitHub demo project for TLS 8001 / Human Resource Audit (HRA) dashboard presentation**  
+> นำเสนอแนวทางเปลี่ยนข้อมูลการตรวจประเมินมาตรฐานแรงงานไทยจาก Excel ไปสู่ Executive Dashboard ที่เปิดใช้งานผ่าน Browser และ GitHub Pages
 
 ![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-159A9C?style=for-the-badge&logo=github)
-![Prototype](https://img.shields.io/badge/Status-Private%20Prototype-002333?style=for-the-badge)
-![Browser Only](https://img.shields.io/badge/Data%20Processing-Browser%20Only-116B58?style=for-the-badge)
+![Project](https://img.shields.io/badge/Project-TLS8001-002333?style=for-the-badge)
+![Prototype](https://img.shields.io/badge/Status-Demo%20Prototype-116B58?style=for-the-badge)
+![Browser Only](https://img.shields.io/badge/Data%20Processing-Browser%20Only-0B7285?style=for-the-badge)
 ![No Real Data](https://img.shields.io/badge/Public%20Repo-No%20Real%20Audit%20Data-B42318?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-0B7285?style=for-the-badge)
 ![jQuery](https://img.shields.io/badge/jQuery-4.0.0-0769AD?style=for-the-badge&logo=jquery)
@@ -16,26 +17,41 @@
 
 | Version | Public URL | Best For |
 |---|---|---|
-| **Main Dashboard** | https://phumindecoknoi.github.io/tls-audit-dashboard/ | เปิดใช้งานหน้า Dashboard หลักผ่าน GitHub Pages |
-| **Modular HTML** | https://phumindecoknoi.github.io/tls-audit-dashboard/index.html | อ่านโครงสร้าง HTML/CSS/JS แยกไฟล์ เหมาะกับการพัฒนาและศึกษา |
-| **Single-file HTML** | https://phumindecoknoi.github.io/tls-audit-dashboard/index-single-file.html | ใช้งาน/ส่งต่อเป็นไฟล์เดียว เหมาะกับ Offline Prototype |
-| **jQuery Teaching Demo** | https://phumindecoknoi.github.io/tls-audit-dashboard/examples/jquery-teaching-demo.html | ตัวอย่างสำหรับสอน jQuery 4.0.0 |
+| **Main Dashboard** | https://phumindecoknoi.github.io/tls-audit-dashboard/ | นำเสนอ dashboard หลักต่อผู้บริหาร / ทีม HR / Audit / Compliance |
+| **Modular HTML** | https://phumindecoknoi.github.io/tls-audit-dashboard/index.html | ศึกษาโครงสร้าง HTML / CSS / JavaScript แยกไฟล์ |
+| **Single-file HTML** | https://phumindecoknoi.github.io/tls-audit-dashboard/index-single-file.html | ใช้งานเป็น offline/shareable prototype |
+| **jQuery Teaching Demo** | https://phumindecoknoi.github.io/tls-audit-dashboard/examples/jquery-teaching-demo.html | ใช้สอน jQuery 4.0.0 จากตัวอย่างจริง |
 
 > ⚠️ **Public Repository Notice**  
-> Repository นี้เผยแพร่เฉพาะ source/prototype เท่านั้น ห้าม commit ไฟล์ Excel ผลตรวจจริง ข้อมูลส่วนบุคคล เอกสารหลักฐาน audit หรือข้อมูลสถานประกอบกิจการที่เป็นความลับ
+> Repository นี้เผยแพร่เฉพาะ source code, documentation, prototype และ demo structure เท่านั้น **ห้าม commit ไฟล์ Excel ผลตรวจจริง ข้อมูลส่วนบุคคล เอกสารหลักฐาน audit หรือข้อมูลสถานประกอบกิจการที่เป็นความลับ**
 
 ---
 
-## 🎯 Project Purpose
+## 🎯 Project Positioning
 
-`tls-audit-dashboard` ถูกออกแบบเป็น **Browser-based Executive Dashboard** สำหรับงาน **Human Resource Audit / Labour Compliance Audit / TLS 8001 Assessment Review** โดยมีเป้าหมายหลักคือ:
+`tls-audit-dashboard` คือ working repository ของ **Project TLS8001** สำหรับนำเสนอแนวคิดการสร้าง **Browser-based Executive Dashboard** จากข้อมูลการตรวจประเมิน **TLS 8001 / Human Resource Audit / Labour Compliance Audit**
 
-- วิเคราะห์ผลการตรวจประเมินจาก Certification Bodies (CBs)
-- สรุป NC / Finding ตาม Site, Classification, Certification Body, Criteria และช่วงเวลา
-- แสดง KPI, Charts, Alerts และ Detail Table ภายใน Browser
-- รองรับ Column Mapping เมื่อหัวตาราง Excel ไม่ตรงกับรูปแบบที่ระบบคาดหวัง
-- ลดความเสี่ยงด้านข้อมูลด้วยแนวทาง **client-side processing**: อ่านไฟล์ในเครื่องผู้ใช้ ไม่อัปโหลดไฟล์ไป Server
-- ใช้เป็น **Learning Repository** สำหรับสอน HTML / CSS / JavaScript / jQuery / Chart.js / SheetJS ผ่าน dashboard จริง
+Project นี้ออกแบบให้ใช้ได้ 3 มุมพร้อมกัน:
+
+| Perspective | Purpose |
+|---|---|
+| **Management Demo** | แสดงผล KPI, chart, trend, Pareto, finding table และ follow-up view |
+| **Audit / Compliance Prototype** | ทดลองแนวคิดการอ่าน Excel, column mapping และจัดกลุ่ม NC/Finding |
+| **Learning Repository** | ใช้สอน HTML, CSS, JavaScript, jQuery, Chart.js, SheetJS และ GitHub workflow |
+
+---
+
+## 🧭 Project Hub
+
+อ่านภาพรวมโครงการแบบ executive/professional ได้ที่:
+
+| Document | Purpose |
+|---|---|
+| [PROJECT.md](PROJECT.md) | Project hub สำหรับ TLS8001: identity, scope, demo links, governance, roadmap |
+| [Demo Presentation Guide](docs/demo-presentation-guide.md) | คู่มือพูดนำเสนอ demo แบบ 3 / 7 / 15 นาที |
+| [GitHub Project Standard](docs/github-project-standard.md) | Checklist มาตรฐาน repo ให้ดู professional บน GitHub |
+| [Contributing Guide](CONTRIBUTING.md) | แนวทาง branch, PR, code/doc contribution และ no-real-data rule |
+| [Security Policy](SECURITY.md) | นโยบายความปลอดภัยและข้อมูลลับสำหรับ public repository |
 
 ---
 
@@ -51,7 +67,7 @@
 | **Detail Table** | ตารางรายละเอียด ค้นหา จัดหน้า และเปิด record detail ได้ |
 | **CSV Export** | Export ตารางที่ filter แล้วเป็น CSV |
 | **Print to PDF** | ใช้ Browser Print สำหรับจัดทำ PDF Summary |
-| **jQuery Teaching Demo** | ตัวอย่างสอน selector, event, property, function และ plugin pattern |
+| **jQuery Teaching Demo** | ตัวอย่าง selector, event, property, function และ plugin pattern |
 | **Privacy by Design** | Prototype ไม่อัปโหลดไฟล์ข้อมูลไป Server |
 
 ---
@@ -59,7 +75,7 @@
 ## 🧱 Technical Architecture
 
 ```text
-User Excel Workbook
+TLS 8001 / HRA Excel Workbook
         │
         ▼
 Browser File API
@@ -78,7 +94,7 @@ Normalized Audit Records
         ├── jQuery DOM / Event Layer
         ├── Chart.js Visualizations
         ├── Alerts / Follow-up List
-        └── Detail Table / CSV Export
+        └── Detail Table / CSV Export / Print
 ```
 
 ### Technology Stack
@@ -99,8 +115,11 @@ Normalized Audit Records
 
 ```text
 tls-audit-dashboard/
-├── LICENSE                           # MIT License
 ├── README.md                         # GitHub landing page / project overview
+├── PROJECT.md                        # Project TLS8001 hub
+├── LICENSE                           # MIT License
+├── CONTRIBUTING.md                   # Contribution and PR guide
+├── SECURITY.md                       # Security and confidentiality policy
 ├── index.html                        # Modular dashboard entry point
 ├── index-single-file.html            # Offline single-file dashboard bundle
 ├── examples/
@@ -115,8 +134,10 @@ tls-audit-dashboard/
 │   ├── data/                         # Reserved for mock/sample data only
 │   └── vendor/                       # Offline vendor libraries
 ├── docs/
-│   ├── jquery-4-teaching-guide.md    # jQuery version, commands, functions, plugin pattern and examples
-│   ├── code-study-notes.md           # Developer study notes for HTML/CSS/JS/jQuery
+│   ├── demo-presentation-guide.md    # Demo script and presentation guide
+│   ├── github-project-standard.md    # GitHub professional checklist
+│   ├── jquery-4-teaching-guide.md    # jQuery version, commands, functions, plugin examples
+│   ├── code-study-notes.md           # Developer study notes
 │   ├── deployment.md                 # GitHub Pages deploy guide
 │   ├── repository-structure.md       # Standard repository structure
 │   ├── workbook-structure.md         # Expected workbook design
@@ -136,7 +157,7 @@ tls-audit-dashboard/
 
 ## 🧭 How to Use
 
-### 1) Use Public GitHub Pages
+### 1) Present the demo
 
 Open:
 
@@ -144,11 +165,17 @@ Open:
 https://phumindecoknoi.github.io/tls-audit-dashboard/
 ```
 
-Then select an Excel file from your device. The file is processed inside the Browser.
+Then import a sanitized/mock Excel workbook. The file is processed inside the Browser.
+
+Recommended presenter guide:
+
+```text
+docs/demo-presentation-guide.md
+```
 
 ### 2) Study jQuery 4.0.0
 
-Open the teaching guide:
+Open the guide:
 
 ```text
 docs/jquery-4-teaching-guide.md
@@ -160,30 +187,7 @@ Open the live teaching demo:
 https://phumindecoknoi.github.io/tls-audit-dashboard/examples/jquery-teaching-demo.html
 ```
 
-Teaching topics included:
-
-- jQuery 4.0.0 setup via CDN
-- selectors: id, class, tag, attribute, `this`
-- events: `.on()`, `.off()`, `.trigger()`
-- form values: `.val()`
-- attributes/properties: `.attr()` vs `.prop()`
-- data attributes: `.data()`
-- DOM updates: `.text()`, `.html()`, `.append()`
-- CSS/class state: `.addClass()`, `.removeClass()`, `.toggleClass()`
-- traversal: `.find()`, `.closest()`, `.parent()`, `.children()`
-- plugin pattern: `$.fn.myPlugin = function () { ... }`
-
-### 3) Use Local Double-click
-
-Open one of these files with a modern Browser:
-
-```text
-index.html
-index-single-file.html
-examples/jquery-teaching-demo.html
-```
-
-### 4) Use Local Web Server
+### 3) Use local web server
 
 ```bash
 python -m http.server 8080
@@ -234,7 +238,10 @@ Repository นี้ตั้งใจให้ใช้เป็นทั้ง
 
 | File | Learning Focus |
 |---|---|
-| `docs/jquery-4-teaching-guide.md` | คู่มือสอน jQuery 4.0.0 พร้อมคำสั่ง properties functions plugins และตัวอย่าง |
+| `PROJECT.md` | Project identity, scope, demo narrative and governance |
+| `docs/demo-presentation-guide.md` | Script สำหรับนำเสนอ demo ต่อผู้บริหาร/ทีมงาน |
+| `docs/github-project-standard.md` | Checklist มาตรฐาน GitHub repo |
+| `docs/jquery-4-teaching-guide.md` | คู่มือสอน jQuery 4.0.0 พร้อม commands/properties/functions/plugins/examples |
 | `examples/jquery-teaching-demo.html` | HTML demo สำหรับสอน jQuery แบบ interactive |
 | `index.html` | HTML semantic structure, script loading order, accessibility, public prototype meta tags |
 | `index-single-file.html` | Single-file bundle strategy สำหรับ offline/shareable prototype |
@@ -257,6 +264,9 @@ Repository นี้ตั้งใจให้ใช้เป็นทั้ง
 - หลักฐานการตรวจ เช่น ภาพถ่าย เอกสารสัญญา เอกสารค่าจ้าง หรือเอกสารนายจ้าง
 - ข้อมูลโรงงาน / ฟาร์ม / หน่วยงานที่ยังไม่ได้รับอนุญาตให้เปิดเผย
 - รายงาน CB หรือ audit evidence ที่มีสถานะ confidential
+- token, password, API key หรือ credential ใด ๆ
+
+ดูเพิ่ม: [`SECURITY.md`](SECURITY.md)
 
 ---
 
@@ -264,7 +274,10 @@ Repository นี้ตั้งใจให้ใช้เป็นทั้ง
 
 | Document | Purpose |
 |---|---|
-| [jQuery 4 Teaching Guide](docs/jquery-4-teaching-guide.md) | คู่มือสอน jQuery version ล่าสุดที่ใช้ใน repo พร้อม commands/properties/functions/plugins/examples |
+| [Project Hub](PROJECT.md) | ศูนย์กลาง Project TLS8001 สำหรับนำเสนอ demo และ governance |
+| [Demo Presentation Guide](docs/demo-presentation-guide.md) | คู่มือพูดนำเสนอ demo แบบมืออาชีพ |
+| [GitHub Project Standard](docs/github-project-standard.md) | Checklist มาตรฐาน repo ให้ดู professional บน GitHub |
+| [jQuery 4 Teaching Guide](docs/jquery-4-teaching-guide.md) | คู่มือสอน jQuery version ล่าสุดที่ใช้ใน repo |
 | [jQuery Teaching Demo](examples/jquery-teaching-demo.html) | ตัวอย่าง HTML สำหรับสอน selector, event, prop, attr, data และ plugin pattern |
 | [Code Study Notes](docs/code-study-notes.md) | คำอธิบายโค้ด HTML/CSS/JS/jQuery/Chart.js/SheetJS สำหรับศึกษา |
 | [Deployment Guide](docs/deployment.md) | วิธี Deploy, Public URL และ Smoke Test |
@@ -277,7 +290,6 @@ Repository นี้ตั้งใจให้ใช้เป็นทั้ง
 | [Assumptions & Limitations](docs/assumptions-limitations.md) | สมมติฐานและข้อจำกัดของ Prototype |
 | [Design System](docs/design-system.md) | หลักการออกแบบ UI |
 | [Open Source Licenses](docs/open-source-licenses.md) | รายการ Library และ License |
-| [MIT License](LICENSE) | Project license |
 
 ---
 
@@ -286,11 +298,11 @@ Repository นี้ตั้งใจให้ใช้เป็นทั้ง
 ```text
 Create Feature Branch
    ↓
-Implement Change
+Implement Focused Change
    ↓
 Open Pull Request
    ↓
-Review README / Docs / HTML / CSS / JS
+Review README / Docs / HTML / CSS / JS / Privacy Impact
    ↓
 Confirm No Real Audit Data
    ↓
@@ -301,19 +313,21 @@ GitHub Pages deploys from main:/
 Manual Smoke Test Public URL
 ```
 
+See: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+
 ---
 
-## ✅ Manual Smoke Test
+## ✅ Demo Smoke Test
 
 - [ ] Public URL เปิดได้โดยไม่เกิด 404
 - [ ] `index.html` โหลด CSS และ JavaScript ได้ครบ
-- [ ] `examples/jquery-teaching-demo.html` เปิดได้และ event ทำงาน
 - [ ] ปุ่มเลือกไฟล์ Excel แสดงผลถูกต้อง
 - [ ] Sheet selection และ Column Mapping ใช้งานได้
 - [ ] KPI cards แสดงผลหลัง import
 - [ ] Charts แสดงผลหลัง import
 - [ ] Detail Table แสดงผลหลัง import
 - [ ] Print to PDF ใช้งานได้
+- [ ] README / PROJECT / Demo Guide แสดงลิงก์ถูกต้อง
 - [ ] ไม่มีไฟล์ข้อมูลจริงหรือข้อมูลลับอยู่ใน repository
 
 ---
@@ -321,4 +335,4 @@ Manual Smoke Test Public URL
 ## 🧑‍💼 Maintainer
 
 Maintained by **Phumin DecOKnoi**  
-For TLS / HRA / Labour Compliance dashboard prototyping and professional GitHub learning workflow.
+For TLS8001 / HRA / Labour Compliance dashboard prototyping, teaching and professional GitHub demo presentation.
