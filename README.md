@@ -1,151 +1,211 @@
 # TLS Audit Dashboard
 
-> Executive Interactive Dashboard สำหรับวิเคราะห์ผลการตรวจประเมินมาตรฐานแรงงานไทย มรท.8001 / TLS 8001 จากไฟล์ Excel ภายใน Browser โดยไม่อัปโหลดไฟล์ไปยัง Server
+> **Executive Interactive Dashboard for TLS 8001 / Human Resource Audit (HRA)**  
+> วิเคราะห์ผลการตรวจประเมินมาตรฐานแรงงานไทยจากไฟล์ Excel ภายใน Browser โดยไม่อัปโหลดข้อมูลไปยัง Server
 
-## Public Deploy
+![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-159A9C?style=for-the-badge&logo=github)
+![Prototype](https://img.shields.io/badge/Status-Private%20Prototype-002333?style=for-the-badge)
+![Browser Only](https://img.shields.io/badge/Data%20Processing-Browser%20Only-116B58?style=for-the-badge)
+![No Real Data](https://img.shields.io/badge/Public%20Repo-No%20Real%20Audit%20Data-B42318?style=for-the-badge)
 
-| Version | Public URL | Use Case |
+---
+
+## 🚀 Live Demo / Public Deploy
+
+| Version | Public URL | Best For |
 |---|---|---|
-| Main Dashboard | https://phumindecoknoi.github.io/tls-audit-dashboard/ | เปิดใช้งานหน้า Dashboard หลักผ่าน GitHub Pages |
-| Modular HTML | https://phumindecoknoi.github.io/tls-audit-dashboard/index.html | ใช้งานเวอร์ชันแยกไฟล์ CSS/JS/Vendor |
-| Single-file HTML | https://phumindecoknoi.github.io/tls-audit-dashboard/index-single-file.html | ใช้งาน/ส่งต่อแบบไฟล์เดียว เหมาะกับ Offline Prototype |
+| **Main Dashboard** | https://phumindecoknoi.github.io/tls-audit-dashboard/ | เปิดใช้งานหน้า Dashboard หลักผ่าน GitHub Pages |
+| **Modular HTML** | https://phumindecoknoi.github.io/tls-audit-dashboard/index.html | อ่านโครงสร้าง HTML/CSS/JS แยกไฟล์ เหมาะกับการพัฒนาและศึกษา |
+| **Single-file HTML** | https://phumindecoknoi.github.io/tls-audit-dashboard/index-single-file.html | ใช้งาน/ส่งต่อเป็นไฟล์เดียว เหมาะกับ Offline Prototype |
 
-> หมายเหตุ: Public Deploy เป็นเพียงตัว Dashboard/Prototype เท่านั้น ห้ามอัปโหลดไฟล์ Excel ผลตรวจจริง ข้อมูลส่วนบุคคล หรือหลักฐานการตรวจที่เป็นความลับลง repository สาธารณะ
+> ⚠️ **Public Repository Notice**  
+> Repository นี้เผยแพร่เฉพาะ source/prototype เท่านั้น ห้าม commit ไฟล์ Excel ผลตรวจจริง ข้อมูลส่วนบุคคล เอกสารหลักฐาน audit หรือข้อมูลสถานประกอบกิจการที่เป็นความลับ
 
-## Project Purpose
+---
 
-Dashboard นี้ออกแบบเพื่อช่วยงาน Human Resource Audit / Labour Compliance Audit โดยเน้นการวิเคราะห์ข้อมูลจาก Excel ภายในเครื่องผู้ใช้ เช่น
+## 🎯 Project Purpose
 
-- สรุปภาพรวมผลการตรวจประเมินจาก Certification Bodies
-- วิเคราะห์ NC / Finding ตาม Site, Classification, Certification Body และช่วงเวลา
+`tls-audit-dashboard` ถูกออกแบบเป็น **Browser-based Executive Dashboard** สำหรับงาน **Human Resource Audit / Labour Compliance Audit / TLS 8001 Assessment Review** โดยมีเป้าหมายหลักคือ:
+
+- วิเคราะห์ผลการตรวจประเมินจาก Certification Bodies (CBs)
+- สรุป NC / Finding ตาม Site, Classification, Certification Body, Criteria และช่วงเวลา
 - แสดง KPI, Charts, Alerts และ Detail Table ภายใน Browser
-- รองรับการตรวจ Column Mapping เมื่อหัวตารางไม่ตรงกับรูปแบบที่ระบบคาดหวัง
-- ลดความเสี่ยงด้านข้อมูล เพราะการอ่านไฟล์เกิดขึ้นฝั่ง Browser
+- รองรับ Column Mapping เมื่อหัวตาราง Excel ไม่ตรงกับรูปแบบที่ระบบคาดหวัง
+- ลดความเสี่ยงด้านข้อมูลด้วยแนวทาง **client-side processing**: อ่านไฟล์ในเครื่องผู้ใช้ ไม่อัปโหลดไฟล์ไป Server
 
-## Repository Status
+---
 
-| Item | Status |
+## ✨ Key Features
+
+| Capability | Description |
 |---|---|
-| Repository Visibility | Public |
-| GitHub Pages | Enabled |
-| Pages Source | `main` branch / repository root `/` |
-| Main Entry | `index.html` |
-| Offline Entry | `index-single-file.html` |
-| Data Policy | Do not commit real audit data |
-| Search Policy | Prototype uses `noindex, nofollow, noarchive, nosnippet` |
+| **Excel Import** | อ่านไฟล์ `.xlsx` / `.xls` ผ่าน SheetJS ภายใน Browser |
+| **Column Mapping** | ตรวจหัวตารางและให้ผู้ใช้ map field ที่จำเป็น |
+| **Executive KPIs** | แสดงจำนวน Findings, Sites, CBs, Major, Minor และ Closed |
+| **Interactive Charts** | ใช้ Chart.js สำหรับ Trend, CB, Classification และ Pareto |
+| **Global Filters** | Filter ตามปี ไตรมาส เดือน CB Site Criteria Legal Status ฯลฯ |
+| **Detail Table** | ตารางรายละเอียด ค้นหา จัดหน้า และเปิด record detail ได้ |
+| **CSV Export** | Export ตารางที่ filter แล้วเป็น CSV |
+| **Print to PDF** | ใช้ Browser Print สำหรับจัดทำ PDF Summary |
+| **Privacy by Design** | Prototype ไม่อัปโหลดไฟล์ข้อมูลไป Server |
 
-## Standard Repository Structure
+---
+
+## 🧱 Technical Architecture
+
+```text
+User Excel Workbook
+        │
+        ▼
+Browser File API
+        │
+        ▼
+SheetJS Workbook Reader
+        │
+        ▼
+Column Detection / Mapping
+        │
+        ▼
+Normalized Audit Records
+        │
+        ├── KPI Calculation
+        ├── Filter Engine
+        ├── Chart.js Visualizations
+        ├── Alerts / Follow-up List
+        └── Detail Table / CSV Export
+```
+
+### Technology Stack
+
+| Layer | Tool / Library | Role |
+|---|---|---|
+| Structure | HTML5 | Semantic layout, accessibility, dialogs, forms |
+| Style | CSS3 | Responsive layout, design tokens, print layout |
+| DOM / Events | jQuery 4.0.0 | Selector, event binding, UI updates |
+| Data Parsing | SheetJS CE | Read Excel workbook inside Browser |
+| Visualization | Chart.js 4.5.1 | Interactive charts |
+| App Logic | Vanilla JavaScript | Data normalization, filtering, KPIs, rendering logic |
+
+---
+
+## 📁 Repository Structure
 
 ```text
 tls-audit-dashboard/
-├── README.md
-├── index.html
-├── index-single-file.html
+├── README.md                         # GitHub landing page / project overview
+├── index.html                        # Modular dashboard entry point
+├── index-single-file.html            # Offline single-file dashboard bundle
 ├── assets/
 │   ├── css/
-│   │   ├── dashboard.css
-│   │   └── print.css
+│   │   ├── dashboard.css             # Main responsive UI stylesheet
+│   │   └── print.css                 # Print/PDF stylesheet
 │   ├── js/
-│   │   ├── dashboard.js
-│   │   └── data-loader.js
-│   ├── data/
-│   └── vendor/
+│   │   ├── data-loader.js            # Excel parsing + mapping + normalization
+│   │   └── dashboard.js              # Dashboard state, filters, charts, table rendering
+│   ├── data/                         # Reserved for mock/sample data only
+│   └── vendor/                       # Offline vendor libraries
 ├── docs/
-│   ├── assumptions-limitations.md
-│   ├── data-dictionary.md
-│   ├── data-quality-report.md
-│   ├── deployment.md
-│   ├── design-system.md
-│   ├── kpi-calculation.md
-│   ├── open-source-licenses.md
-│   ├── repository-structure.md
-│   ├── technical-qa.md
-│   └── workbook-structure.md
+│   ├── code-study-notes.md           # Developer study notes for HTML/CSS/JS/jQuery
+│   ├── deployment.md                 # GitHub Pages deploy guide
+│   ├── repository-structure.md       # Standard repository structure
+│   ├── workbook-structure.md         # Expected workbook design
+│   ├── data-dictionary.md            # Data fields and meanings
+│   ├── kpi-calculation.md            # KPI calculation notes
+│   ├── data-quality-report.md        # Data quality and limitations
+│   ├── technical-qa.md               # Technical QA checklist
+│   ├── assumptions-limitations.md    # Prototype assumptions and limitations
+│   ├── design-system.md              # Visual design principles
+│   └── open-source-licenses.md       # Library license references
 ├── .github/
-│   └── PULL_REQUEST_TEMPLATE.md
-└── .gitignore
+│   └── PULL_REQUEST_TEMPLATE.md      # Pull Request quality checklist
+└── .gitignore                        # Prevents local/audit/confidential files from being committed
 ```
 
-## How to Use
+---
 
-### 1. Public GitHub Pages
+## 🧭 How to Use
 
-เปิดลิงก์หลัก:
+### 1) Use Public GitHub Pages
+
+Open:
 
 ```text
 https://phumindecoknoi.github.io/tls-audit-dashboard/
 ```
 
-จากนั้นเลือกไฟล์ Excel จากเครื่องของผู้ใช้ ระบบจะอ่านไฟล์ใน Browser โดยไม่อัปโหลดไปยัง Server
+Then select an Excel file from your device. The file is processed inside the Browser.
 
-### 2. Local Double-click
+### 2) Use Local Double-click
 
-เปิดไฟล์ใดไฟล์หนึ่งด้วย Browser รุ่นปัจจุบัน:
+Open one of these files with a modern Browser:
 
 ```text
 index.html
 index-single-file.html
 ```
 
-### 3. Local Web Server
+### 3) Use Local Web Server
 
 ```bash
 python -m http.server 8080
 ```
 
-เปิด:
+Then open:
 
 ```text
 http://localhost:8080/
 ```
 
-## Excel Import Flow
+---
 
-1. กด **เลือกไฟล์ Excel**
-2. เลือกไฟล์ `.xlsx` หรือ `.xls`
-3. เลือก Sheet ที่ต้องการ โดยแนะนำ `NC_Log`
-4. กด **อ่าน Sheet**
-5. ตรวจ Column Mapping
-6. กด **นำไปใช้**
-7. Filters, KPI, Charts, Alerts และ Detail Table จะคำนวณใหม่ภายใน Browser
+## 🔄 Excel Import Flow
 
-## Required Column Mapping
+```text
+Select Excel File
+   ↓
+Choose Sheet
+   ↓
+Read Sheet
+   ↓
+Auto-detect Header Row
+   ↓
+Column Mapping
+   ↓
+Normalize Records
+   ↓
+Render KPI / Charts / Alerts / Table
+```
 
-คอลัมน์จำเป็น ได้แก่
+### Required Fields
 
-| Required Field | Description |
+| Field | Meaning |
 |---|---|
-| Audit Date | วันที่ตรวจประเมิน |
-| Audited Site | หน่วยงาน / โรงงาน / สถานประกอบกิจการที่ถูกตรวจ |
-| NC Classification | ประเภทหรือระดับของ NC / Finding |
-| Certification Body | หน่วยตรวจ / หน่วยรับรอง |
+| `Audit Date` | วันที่ตรวจประเมิน |
+| `Audited Site` | หน่วยงาน / โรงงาน / สถานประกอบกิจการที่ถูกตรวจ |
+| `NC Classification` | ประเภทหรือระดับของ NC / Finding |
+| `Certification Body` | หน่วยตรวจ / หน่วยรับรอง |
 
-คอลัมน์อื่นสามารถเลือกได้ตามข้อมูลจริง หากชื่อหัวตารางไม่ตรง ระบบจะแสดง Mapping Screen ให้ผู้ใช้กำหนดเอง
+หาก workbook ใช้ชื่อคอลัมน์ไม่ตรง ระบบจะแสดง Mapping Screen เพื่อให้ผู้ใช้กำหนด field เอง
 
-## Documentation
+---
 
-| Document | Purpose |
+## 🧠 Code Study Notes
+
+Repository นี้ตั้งใจให้ใช้เป็นทั้ง **Prototype** และ **Learning Repository** สำหรับศึกษาการสร้าง Dashboard ด้วย HTML/CSS/JavaScript/jQuery
+
+| File | Learning Focus |
 |---|---|
-| [Deployment Guide](docs/deployment.md) | วิธี Deploy, Public URL และ Smoke Test |
-| [Repository Structure](docs/repository-structure.md) | โครงสร้าง repo และบทบาทของแต่ละ folder |
-| [Workbook Structure](docs/workbook-structure.md) | โครงสร้างไฟล์ Excel ที่ใช้กับ Dashboard |
-| [Data Dictionary](docs/data-dictionary.md) | ความหมายของ field / column |
-| [KPI Calculation](docs/kpi-calculation.md) | หลักการคำนวณ KPI |
-| [Data Quality Report](docs/data-quality-report.md) | ข้อจำกัดและคุณภาพข้อมูล |
-| [Technical QA](docs/technical-qa.md) | แนวทางตรวจสอบเชิงเทคนิค |
-| [Assumptions & Limitations](docs/assumptions-limitations.md) | สมมติฐานและข้อจำกัดของ Prototype |
-| [Design System](docs/design-system.md) | หลักการออกแบบ UI |
-| [Open Source Licenses](docs/open-source-licenses.md) | รายการ Library และ License |
+| `index.html` | HTML semantic structure, script loading order, accessibility, public prototype meta tags |
+| `index-single-file.html` | Single-file bundle strategy สำหรับ offline/shareable prototype |
+| `assets/css/dashboard.css` | CSS variables, responsive grid, card layout, accessibility focus state |
+| `assets/css/print.css` | Print/PDF stylesheet และการซ่อน interactive controls ตอนพิมพ์ |
+| `assets/js/data-loader.js` | SheetJS, header detection, column mapping, data normalization, formula injection guard |
+| `assets/js/dashboard.js` | jQuery event handling, state management, filtering, Chart.js rendering, table pagination |
+| `docs/code-study-notes.md` | คำอธิบายเชิง developer สำหรับอ่านโค้ดต่อภายหลัง |
 
-## Libraries
+---
 
-- jQuery 4.0.0 — Official CDN: `https://code.jquery.com/jquery-4.0.0.min.js` — MIT License
-- Chart.js 4.5.1 — MIT License
-- SheetJS Community Edition 0.20.3 — Official CDN — Apache-2.0 License
-- Offline fallback: jQuery, Chart.js และ SheetJS CE ภายใต้ `assets/vendor/`
-- ไม่ใช้ DataTables เนื่องจาก Prototype ใช้ตาราง Vanilla JavaScript เพื่อลด Dependency และลดความเสี่ยงด้าน Compatibility กับ jQuery 4.0.0
-
-## Data Privacy & Confidentiality
+## 🛡️ Data Privacy & Confidentiality
 
 ไฟล์ต้นฉบับอาจมีชื่อผู้ตรวจ รายละเอียด Finding ข้อมูลสถานประกอบกิจการ และข้อมูลอื่นที่อาจเป็นความลับ โปรดใช้งานภายใต้สิทธิ์ที่ได้รับอนุญาตเท่านั้น
 
@@ -157,31 +217,49 @@ http://localhost:8080/
 - ข้อมูลโรงงาน / ฟาร์ม / หน่วยงานที่ยังไม่ได้รับอนุญาตให้เปิดเผย
 - รายงาน CB หรือ audit evidence ที่มีสถานะ confidential
 
-## Current Limitations
+---
 
-- ไม่มี Province/Region, Pass/Fail, Certificate Expiry, Responsible Person และ Closure Date หาก workbook ไม่ได้ให้ข้อมูลไว้
-- ไม่สร้าง Map, Pass Rate, Certificate Aging หรือ Risk Matrix จากข้อมูลที่ยังไม่รองรับ
-- ค่า Open หมายถึงไม่พบ `Closed` ใน Remarks ไม่ใช่การยืนยันสถานะอย่างเป็นทางการ
-- การ Export PDF ใช้ Print to PDF ของ Browser
-- การ Export Excel ใช้ CSV ซึ่งเปิดใน Excel ได้
+## 📚 Documentation
 
-## Recommended Workflow
+| Document | Purpose |
+|---|---|
+| [Code Study Notes](docs/code-study-notes.md) | คำอธิบายโค้ด HTML/CSS/JS/jQuery/Chart.js/SheetJS สำหรับศึกษา |
+| [Deployment Guide](docs/deployment.md) | วิธี Deploy, Public URL และ Smoke Test |
+| [Repository Structure](docs/repository-structure.md) | โครงสร้าง repo และบทบาทของแต่ละ folder |
+| [Workbook Structure](docs/workbook-structure.md) | โครงสร้างไฟล์ Excel ที่ใช้กับ Dashboard |
+| [Data Dictionary](docs/data-dictionary.md) | ความหมายของ field / column |
+| [KPI Calculation](docs/kpi-calculation.md) | หลักการคำนวณ KPI |
+| [Data Quality Report](docs/data-quality-report.md) | ข้อจำกัดและคุณภาพข้อมูล |
+| [Technical QA](docs/technical-qa.md) | แนวทางตรวจสอบเชิงเทคนิค |
+| [Assumptions & Limitations](docs/assumptions-limitations.md) | สมมติฐานและข้อจำกัดของ Prototype |
+| [Design System](docs/design-system.md) | หลักการออกแบบ UI |
+| [Open Source Licenses](docs/open-source-licenses.md) | รายการ Library และ License |
+
+---
+
+## ⚙️ Recommended GitHub Workflow
 
 ```text
-Feature Branch
+Create Feature Branch
    ↓
-Pull Request
+Implement Change
    ↓
-Review README / docs / HTML / CSS / JS
+Open Pull Request
+   ↓
+Review README / Docs / HTML / CSS / JS
+   ↓
+Confirm No Real Audit Data
    ↓
 Merge to main
    ↓
 GitHub Pages deploys from main:/
    ↓
-Manual smoke test public URL
+Manual Smoke Test Public URL
 ```
 
-## Manual Smoke Test
+---
+
+## ✅ Manual Smoke Test
 
 - [ ] Public URL เปิดได้โดยไม่เกิด 404
 - [ ] `index.html` โหลด CSS และ JavaScript ได้ครบ
@@ -195,4 +273,7 @@ Manual smoke test public URL
 
 ---
 
-Maintained by **Phumin DecOKnoi** for TLS / HRA / Labour Compliance dashboard prototyping.
+## 🧑‍💼 Maintainer
+
+Maintained by **Phumin DecOKnoi**  
+For TLS / HRA / Labour Compliance dashboard prototyping and professional GitHub learning workflow.
