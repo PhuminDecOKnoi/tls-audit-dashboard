@@ -1,1 +1,14 @@
+/*
+  TLS Audit Dashboard | Print Stylesheet
+  ------------------------------------------------------------
+  Purpose:
+  - Optimizes the dashboard for Browser Print / Save as PDF.
+  - Hides interactive controls that are not useful in a static report.
+  - Preserves chart and summary sections for management review.
+
+  Study Notes:
+  - @page sets A4 landscape output for dashboard-style reports.
+  - print-color-adjust keeps the header colors closer to the screen version.
+  - break-inside: avoid helps prevent cards from splitting awkwardly across pages.
+*/
 @page{size:A4 landscape;margin:10mm}.toolbar,.filter-panel,.chart-card button,.table-card input,.table-card select,.site-footer{display:none!important}main{display:block;padding:0}.site-header{print-color-adjust:exact;-webkit-print-color-adjust:exact}.chart-grid{grid-template-columns:1fr 1fr}.chart-card,.summary-card,.alerts-card{box-shadow:none;break-inside:avoid}.table-scroll{max-height:none;overflow:visible}
