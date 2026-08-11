@@ -7,6 +7,8 @@
 ![Prototype](https://img.shields.io/badge/Status-Private%20Prototype-002333?style=for-the-badge)
 ![Browser Only](https://img.shields.io/badge/Data%20Processing-Browser%20Only-116B58?style=for-the-badge)
 ![No Real Data](https://img.shields.io/badge/Public%20Repo-No%20Real%20Audit%20Data-B42318?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-0B7285?style=for-the-badge)
+![jQuery](https://img.shields.io/badge/jQuery-4.0.0-0769AD?style=for-the-badge&logo=jquery)
 
 ---
 
@@ -17,6 +19,7 @@
 | **Main Dashboard** | https://phumindecoknoi.github.io/tls-audit-dashboard/ | เปิดใช้งานหน้า Dashboard หลักผ่าน GitHub Pages |
 | **Modular HTML** | https://phumindecoknoi.github.io/tls-audit-dashboard/index.html | อ่านโครงสร้าง HTML/CSS/JS แยกไฟล์ เหมาะกับการพัฒนาและศึกษา |
 | **Single-file HTML** | https://phumindecoknoi.github.io/tls-audit-dashboard/index-single-file.html | ใช้งาน/ส่งต่อเป็นไฟล์เดียว เหมาะกับ Offline Prototype |
+| **jQuery Teaching Demo** | https://phumindecoknoi.github.io/tls-audit-dashboard/examples/jquery-teaching-demo.html | ตัวอย่างสำหรับสอน jQuery 4.0.0 |
 
 > ⚠️ **Public Repository Notice**  
 > Repository นี้เผยแพร่เฉพาะ source/prototype เท่านั้น ห้าม commit ไฟล์ Excel ผลตรวจจริง ข้อมูลส่วนบุคคล เอกสารหลักฐาน audit หรือข้อมูลสถานประกอบกิจการที่เป็นความลับ
@@ -32,6 +35,7 @@
 - แสดง KPI, Charts, Alerts และ Detail Table ภายใน Browser
 - รองรับ Column Mapping เมื่อหัวตาราง Excel ไม่ตรงกับรูปแบบที่ระบบคาดหวัง
 - ลดความเสี่ยงด้านข้อมูลด้วยแนวทาง **client-side processing**: อ่านไฟล์ในเครื่องผู้ใช้ ไม่อัปโหลดไฟล์ไป Server
+- ใช้เป็น **Learning Repository** สำหรับสอน HTML / CSS / JavaScript / jQuery / Chart.js / SheetJS ผ่าน dashboard จริง
 
 ---
 
@@ -47,6 +51,7 @@
 | **Detail Table** | ตารางรายละเอียด ค้นหา จัดหน้า และเปิด record detail ได้ |
 | **CSV Export** | Export ตารางที่ filter แล้วเป็น CSV |
 | **Print to PDF** | ใช้ Browser Print สำหรับจัดทำ PDF Summary |
+| **jQuery Teaching Demo** | ตัวอย่างสอน selector, event, property, function และ plugin pattern |
 | **Privacy by Design** | Prototype ไม่อัปโหลดไฟล์ข้อมูลไป Server |
 
 ---
@@ -70,6 +75,7 @@ Normalized Audit Records
         │
         ├── KPI Calculation
         ├── Filter Engine
+        ├── jQuery DOM / Event Layer
         ├── Chart.js Visualizations
         ├── Alerts / Follow-up List
         └── Detail Table / CSV Export
@@ -85,6 +91,7 @@ Normalized Audit Records
 | Data Parsing | SheetJS CE | Read Excel workbook inside Browser |
 | Visualization | Chart.js 4.5.1 | Interactive charts |
 | App Logic | Vanilla JavaScript | Data normalization, filtering, KPIs, rendering logic |
+| License | MIT License | Open-source project license for source code and documentation |
 
 ---
 
@@ -92,9 +99,12 @@ Normalized Audit Records
 
 ```text
 tls-audit-dashboard/
+├── LICENSE                           # MIT License
 ├── README.md                         # GitHub landing page / project overview
 ├── index.html                        # Modular dashboard entry point
 ├── index-single-file.html            # Offline single-file dashboard bundle
+├── examples/
+│   └── jquery-teaching-demo.html     # jQuery 4 teaching demo
 ├── assets/
 │   ├── css/
 │   │   ├── dashboard.css             # Main responsive UI stylesheet
@@ -105,6 +115,7 @@ tls-audit-dashboard/
 │   ├── data/                         # Reserved for mock/sample data only
 │   └── vendor/                       # Offline vendor libraries
 ├── docs/
+│   ├── jquery-4-teaching-guide.md    # jQuery version, commands, functions, plugin pattern and examples
 │   ├── code-study-notes.md           # Developer study notes for HTML/CSS/JS/jQuery
 │   ├── deployment.md                 # GitHub Pages deploy guide
 │   ├── repository-structure.md       # Standard repository structure
@@ -115,7 +126,7 @@ tls-audit-dashboard/
 │   ├── technical-qa.md               # Technical QA checklist
 │   ├── assumptions-limitations.md    # Prototype assumptions and limitations
 │   ├── design-system.md              # Visual design principles
-│   └── open-source-licenses.md       # Library license references
+│   └── open-source-licenses.md       # Project and library license references
 ├── .github/
 │   └── PULL_REQUEST_TEMPLATE.md      # Pull Request quality checklist
 └── .gitignore                        # Prevents local/audit/confidential files from being committed
@@ -135,16 +146,44 @@ https://phumindecoknoi.github.io/tls-audit-dashboard/
 
 Then select an Excel file from your device. The file is processed inside the Browser.
 
-### 2) Use Local Double-click
+### 2) Study jQuery 4.0.0
+
+Open the teaching guide:
+
+```text
+docs/jquery-4-teaching-guide.md
+```
+
+Open the live teaching demo:
+
+```text
+https://phumindecoknoi.github.io/tls-audit-dashboard/examples/jquery-teaching-demo.html
+```
+
+Teaching topics included:
+
+- jQuery 4.0.0 setup via CDN
+- selectors: id, class, tag, attribute, `this`
+- events: `.on()`, `.off()`, `.trigger()`
+- form values: `.val()`
+- attributes/properties: `.attr()` vs `.prop()`
+- data attributes: `.data()`
+- DOM updates: `.text()`, `.html()`, `.append()`
+- CSS/class state: `.addClass()`, `.removeClass()`, `.toggleClass()`
+- traversal: `.find()`, `.closest()`, `.parent()`, `.children()`
+- plugin pattern: `$.fn.myPlugin = function () { ... }`
+
+### 3) Use Local Double-click
 
 Open one of these files with a modern Browser:
 
 ```text
 index.html
 index-single-file.html
+examples/jquery-teaching-demo.html
 ```
 
-### 3) Use Local Web Server
+### 4) Use Local Web Server
 
 ```bash
 python -m http.server 8080
@@ -195,6 +234,8 @@ Repository นี้ตั้งใจให้ใช้เป็นทั้ง
 
 | File | Learning Focus |
 |---|---|
+| `docs/jquery-4-teaching-guide.md` | คู่มือสอน jQuery 4.0.0 พร้อมคำสั่ง properties functions plugins และตัวอย่าง |
+| `examples/jquery-teaching-demo.html` | HTML demo สำหรับสอน jQuery แบบ interactive |
 | `index.html` | HTML semantic structure, script loading order, accessibility, public prototype meta tags |
 | `index-single-file.html` | Single-file bundle strategy สำหรับ offline/shareable prototype |
 | `assets/css/dashboard.css` | CSS variables, responsive grid, card layout, accessibility focus state |
@@ -223,6 +264,8 @@ Repository นี้ตั้งใจให้ใช้เป็นทั้ง
 
 | Document | Purpose |
 |---|---|
+| [jQuery 4 Teaching Guide](docs/jquery-4-teaching-guide.md) | คู่มือสอน jQuery version ล่าสุดที่ใช้ใน repo พร้อม commands/properties/functions/plugins/examples |
+| [jQuery Teaching Demo](examples/jquery-teaching-demo.html) | ตัวอย่าง HTML สำหรับสอน selector, event, prop, attr, data และ plugin pattern |
 | [Code Study Notes](docs/code-study-notes.md) | คำอธิบายโค้ด HTML/CSS/JS/jQuery/Chart.js/SheetJS สำหรับศึกษา |
 | [Deployment Guide](docs/deployment.md) | วิธี Deploy, Public URL และ Smoke Test |
 | [Repository Structure](docs/repository-structure.md) | โครงสร้าง repo และบทบาทของแต่ละ folder |
@@ -234,6 +277,7 @@ Repository นี้ตั้งใจให้ใช้เป็นทั้ง
 | [Assumptions & Limitations](docs/assumptions-limitations.md) | สมมติฐานและข้อจำกัดของ Prototype |
 | [Design System](docs/design-system.md) | หลักการออกแบบ UI |
 | [Open Source Licenses](docs/open-source-licenses.md) | รายการ Library และ License |
+| [MIT License](LICENSE) | Project license |
 
 ---
 
@@ -263,6 +307,7 @@ Manual Smoke Test Public URL
 
 - [ ] Public URL เปิดได้โดยไม่เกิด 404
 - [ ] `index.html` โหลด CSS และ JavaScript ได้ครบ
+- [ ] `examples/jquery-teaching-demo.html` เปิดได้และ event ทำงาน
 - [ ] ปุ่มเลือกไฟล์ Excel แสดงผลถูกต้อง
 - [ ] Sheet selection และ Column Mapping ใช้งานได้
 - [ ] KPI cards แสดงผลหลัง import
