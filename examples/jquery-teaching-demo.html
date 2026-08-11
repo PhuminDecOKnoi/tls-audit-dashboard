@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>jQuery 4 Teaching Demo</title>
+
+  <!--
+    jQuery Teaching Demo
+    ------------------------------------------------------------
+    Purpose:
+    - ใช้เป็นไฟล์ตัวอย่างสำหรับสอน jQuery 4.0.0
+    - แสดง selector, event, val, text, html, prop, attr, data,
+      class methods, traversal, event delegation และ plugin pattern
+
+    Note:
+    - ไฟล์นี้เป็นตัวอย่างเพื่อการศึกษา ไม่ใช่ production dashboard
+    - ข้อมูลทั้งหมดเป็น mock data ไม่มีข้อมูล audit จริง
+  -->
+
+  <style>
+    :root {
+      --primary: #002333;
+      --accent: #159a9c;
+      --line: #d9e5e4;
+      --surface: #ffffff;
+      --background: #f3f7f6;
+      --danger: #b42318;
+      --success: #116b58;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: var(--background);
+      color: var(--primary);
+      line-height: 1.55;
+    }
+
+    header {
+      padding: 24px;
+      background: linear-gradient(120deg, var(--primary), #06465a);
+      color: #fff;
+    }
+
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    section {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    button, input, select {
+      font: inherit;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    button {
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .secondary { background: #eaf4f2; color: var(--primary); }
+    .danger { background: var(--danger); }
+    .success { color: var(--success); font-weight: 700; }
+    .error { color: var(--danger); font-weight: 700; }
+    .is-highlight { outline: 3px solid var(--accent); }
+    .is-required { border-left: 5px solid var(--accent); }
+    .required-note { margin-left: 8px; font-size: .8rem; color: var(--accent); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    th, td {
+      padding: 8px;
+      border-top: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+  </style>
+
+  <!-- Official jQuery Core 4.0.0 CDN. ใช้ development/demo ได้; production ควรตรวจ SRI เสมอ -->
+  <script src="https://code.jquery.com/jquery-4.0.0.min.js" integrity="sha384-fgGyf7Mo7DURSOMnOy7ed+dkq5Job205Gnzu6QIg0BOHKaqt4D76Dt8VlDCzcMHV" crossorigin="anonymous"></script>
+</head>
+<body>
+  <header>
+    <h1>jQuery 4.0.0 Teaching Demo</h1>
+    <p>ตัวอย่างสำหรับสอน selector, event, property, function และ plugin pattern</p>
+  </header>
+
+  <main>
+    <section id="lesson-status" class="is-required">
+      <h2>1) Status and Class Methods</h2>
+      <p id="status-message">Ready</p>
+      <button id="success-button" type="button">Set Success</button>
+      <button id="error-button" type="button" class="danger">Set Error</button>
+      <button id="highlight-button" type="button" class="secondary">Toggle Highlight</button>
+    </section>
+
+    <section>
+      <h2>2) Form Value / Property / Attribute</h2>
+      <div class="toolbar">
+        <label for="keyword">Keyword</label>
+        <input id="keyword" type="search" placeholder="พิมพ์คำค้นหา เช่น Major">
+
+        <label for="classification">Classification</label>
+        <select id="classification">
+          <option value="">All</option>
+          <option value="Major">Major</option>
+          <option value="Minor">Minor</option>
+          <option value="Observation">Observation</option>
+        </select>
+
+        <label>
+          <input id="lock-filter" type="checkbox">
+          Lock filter
+        </label>
+      </div>
+      <p>Current filter: <strong id="filter-output">All</strong></p>
+    </section>
+
+    <section>
+      <h2>3) Event Delegation and Data Attribute</h2>
+      <p>คลิกแถวในตารางเพื่อดูค่า <code>data-id</code></p>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Site</th>
+            <th>Classification</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="record-body"></tbody>
+      </table>
+      <p id="record-output">ยังไม่ได้เลือก record</p>
+    </section>
+
+    <section>
+      <h2>4) Custom jQuery Plugin Pattern</h2>
+      <p>ตัวอย่าง plugin: <code>markRequired()</code></p>
+      <button id="apply-plugin" type="button">Apply Plugin</button>
+      <div id="plugin-target" style="margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px;">
+        Mapping Field Area
+      </div>
+    </section>
+  </main>
+
+  <script>
+    /*
+      Professional Teaching Notes
+      ------------------------------------------------------------
+      1. $(function () {}) คือ document ready shorthand:
+         ให้ code ทำงานหลัง DOM พร้อมใช้งาน
+      2. ใช้ jQuery กับ DOM/event/UI state
+      3. ใช้ native JavaScript ร่วมได้ เช่น array.filter(), String.trim()
+    */
+
+    $(function () {
+      'use strict';
+
+      const records = [
+        { id: 1, site: 'Feed Lamphun', classification: 'Major', status: 'Open' },
+        { id: 2, site: 'Feed Lamphun', classification: 'Minor', status: 'Closed' },
+        { id: 3, site: 'Mock Site A', classification: 'Observation', status: 'Open' }
+      ];
+
+      function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, function (char) {
+          return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char];
+        });
+      }
+
+      function renderRows(rows) {
+        const html = rows.map(function (row) {
+          return '<tr data-id="' + row.id + '">' +
+            '<td>' + row.id + '</td>' +
+            '<td>' + escapeHtml(row.site) + '</td>' +
+            '<td>' + escapeHtml(row.classification) + '</td>' +
+            '<td>' + escapeHtml(row.status) + '</td>' +
+          '</tr>';
+        }).join('');
+
+        $('#record-body').html(html);
+      }
+
+      function applyFilter() {
+        const keyword = $('#keyword').val().trim().toLowerCase();
+        const classification = $('#classification').val();
+
+        const filtered = records.filter(function (row) {
+          const matchesKeyword = !keyword || Object.values(row).join(' ').toLowerCase().includes(keyword);
+          const matchesClass = !classification || row.classification === classification;
+          return matchesKeyword && matchesClass;
+        });
+
+        $('#filter-output').text((classification || 'All') + ' / keyword: ' + (keyword || '-'));
+        renderRows(filtered);
+      }
+
+      // .text() + .removeClass() + .addClass()
+      $('#success-button').on('click', function () {
+        $('#status-message')
+          .text('Success: jQuery updated text and class')
+          .removeClass('error')
+          .addClass('success');
+      });
+
+      // .toggleClass() ใช้เปิด/ปิด class ตามเงื่อนไข
+      $('#error-button').on('click', function () {
+        $('#status-message')
+          .text('Error: this is a demo state')
+          .removeClass('success')
+          .addClass('error');
+      });
+
+      $('#highlight-button').on('click', function () {
+        $('#lesson-status').toggleClass('is-highlight');
+      });
+
+      // .val() อ่านค่าจาก input/select
+      $('#keyword, #classification').on('input change', applyFilter);
+
+      // .prop() เหมาะกับ boolean property เช่น disabled/checked
+      $('#lock-filter').on('change', function () {
+        const locked = $(this).prop('checked');
+        $('#keyword, #classification').prop('disabled', locked);
+      });
+
+      // Event delegation: ใช้กับ row ที่ render ใหม่ได้เสมอ
+      $('#record-body').on('click', 'tr[data-id]', function () {
+        const id = $(this).data('id');
+        const row = records.find(function (item) { return item.id === id; });
+        $('#record-output').text('Selected record #' + id + ': ' + row.site + ' / ' + row.classification);
+      });
+
+      // Custom plugin pattern
+      (function ($) {
+        $.fn.markRequired = function (options) {
+          const settings = $.extend({
+            text: 'Required for mapping',
+            className: 'is-required'
+          }, options);
+
+          return this.each(function () {
+            const $element = $(this);
+            $element.addClass(settings.className);
+            if (!$element.find('.required-note').length) {
+              $element.append('<span class="required-note">' + escapeHtml(settings.text) + '</span>');
+            }
+          });
+        };
+      })(jQuery);
+
+      $('#apply-plugin').on('click', function () {
+        $('#plugin-target').markRequired({ text: 'Required Field' });
+      });
+
+      renderRows(records);
+    });
+  </script>
+</body>
+</html>
