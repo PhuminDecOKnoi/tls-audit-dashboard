@@ -1,0 +1,49 @@
+name: TLS8001 Static Smoke Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  static-smoke-test:
+    name: Static HTML CSS JS smoke test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify required project files
+        run: |
+          test -f README.md
+          test -f PROJECT.md
+          test -f LICENSE
+          test -f SECURITY.md
+          test -f CONTRIBUTING.md
+          test -f index.html
+          test -f assets/css/dashboard.css
+          test -f assets/css/print.css
+          test -f assets/js/data-loader.js
+          test -f assets/js/dashboard.js
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check assets/js/data-loader.js
+          node --check assets/js/dashboard.js
+
+      - name: Check privacy and fallback markers
+        run: |
+          grep -q 'noindex, nofollow' index.html
+          grep -q 'window.jQuery || document.write' index.html
+          grep -q 'window.Chart || document.write' index.html
+          grep -q 'window.XLSX || document.write' index.html
