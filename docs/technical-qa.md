@@ -14,14 +14,36 @@
 - Keyboard: native buttons/selects/dialog, visible focus, skip link, Enter/Space activation on detail rows
 - Security: text escaped before HTML rendering; spreadsheet values beginning with formula-control characters are prefixed for CSV/output safety; no credentials in source
 
+## Continuous Integration smoke test
+
+A GitHub Actions workflow is included at `.github/workflows/static-smoke-test.yml`.
+
+The workflow checks:
+
+- Required project files are present.
+- `assets/js/data-loader.js` passes `node --check`.
+- `assets/js/dashboard.js` passes `node --check`.
+- `index.html` keeps the private prototype marker `noindex, nofollow`.
+- `index.html` keeps conditional fallback markers for jQuery, Chart.js and SheetJS.
+
 ## Library compatibility approach
 - No jQuery plugin or DataTables dependency is used
 - jQuery 4.0.0 is used for DOM/events only
 - Chart.js and SheetJS are independent of jQuery
-- Script order uses `defer`: CDN libraries, local fallback copies, then application scripts
+- Script loading uses a CDN-first conditional fallback pattern:
+  - CDN jQuery, Chart.js and SheetJS load first.
+  - Local vendor copies load only when the expected global object is unavailable.
+  - Application scripts load after vendor globals are available.
+- This avoids duplicate library evaluation while preserving offline/self-contained fallback support.
+
+## Maintainability and teaching-readiness approach
+- `dashboard.js` is structured into readable controller sections: configuration/state, helpers, filters, rendering, import/export/dialog flow, and event/bootstrap.
+- `dashboard.css` and `print.css` are formatted into section-based teaching blocks.
+- jQuery remains a UI utility layer for DOM selection, events and UI state updates; workbook parsing remains in `data-loader.js`.
 
 ## Items requiring deployment-environment testing
 - Lighthouse scores depend on the hosting environment and network
 - Google Rich Results Test is not applicable in Private Prototype mode because structured data is intentionally omitted
 - CDN reachability depends on organizational firewall policy; Offline Vendor copies are included
 - Print-to-PDF appearance can vary slightly by Browser and printer settings
+- GitHub Actions confirms syntax/static markers but does not replace manual browser testing with a sanitized workbook
