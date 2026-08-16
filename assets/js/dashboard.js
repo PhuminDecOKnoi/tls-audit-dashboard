@@ -1,28 +1,901 @@
-(function($,global){'use strict';
-let workbook=null,inspection=null,data=[],filters={},charts={},page=1,sortKey='dateSort',sortAsc=false,period='month',cbLevel='cb',percentMode=false,paretoDesc=true;
-const defs=[['year','ปี'],['quarter','ไตรมาส'],['month','เดือน'],['cb','Certification Body'],['classification','ระดับข้อบกพร่อง'],['ba','Business Area'],['bu','Business Unit'],['site','สถานประกอบกิจการ'],['auditType','ประเภทการตรวจ'],['criteria','เกณฑ์การตรวจ'],['legal','กฎหมาย / ข้อกำหนด'],['status','สถานะ Corrective Action']];
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const labels={month:{'1':'ม.ค.','2':'ก.พ.','3':'มี.ค.','4':'เม.ย.','5':'พ.ค.','6':'มิ.ย.','7':'ก.ค.','8':'ส.ค.','9':'ก.ย.','10':'ต.ค.','11':'พ.ย.','12':'ธ.ค.'}};
-function status(msg,error=false){$('#status-message').text(msg).toggleClass('error',error)}function debounce(fn,wait=180){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),wait)}}function uniq(a){return [...new Set(a.filter(Boolean))].sort((x,y)=>String(x).localeCompare(String(y),'th',{numeric:true}))}function selected(k){return filters[k]||[]}function filtered(){let q=$('#table-search').val().trim().toLowerCase();return data.filter(r=>defs.every(([k])=>!selected(k).length||selected(k).includes(r[k]))&&(!q||Object.values(r).join(' ').toLowerCase().includes(q)))}function countBy(rows,k){let m={};rows.forEach(r=>m[r[k]]=(m[r[k]]||0)+1);return Object.entries(m).sort((a,b)=>b[1]-a[1]||String(a[0]).localeCompare(String(b[0]),'th'))}function context(){let a=defs.filter(([k])=>selected(k).length).map(([k,n])=>`${n}: ${selected(k).map(v=>labels[k]?.[v]||v).join(', ')}`);return a.length?a.join(' • '):'ทั้งหมด'}
-function ensureLibraries(){if(!global.jQuery)throw new Error('jQuery 4.0.0 ไม่พร้อมใช้งาน');if(!global.Chart)throw new Error('Chart.js ไม่พร้อมใช้งาน');if(!global.XLSX)throw new Error('SheetJS ไม่พร้อมใช้งาน')}
-function renderFilters(){let html=defs.map(([k,n])=>`<div class="filter-field"><label for="filter-${k}">${n}</label><select id="filter-${k}" data-key="${k}" multiple>${uniq(data.map(r=>r[k])).map(v=>`<option value="${esc(v)}">${esc(labels[k]?.[v]||v)}</option>`).join('')}</select></div>`).join('');$('#filters').html(html).find('select').on('change',function(){filters[$(this).data('key')]=$(this).val()||[];page=1;renderAll()})}
-function setFilter(k,v){let a=selected(k).slice(),i=a.indexOf(v);i>=0?a.splice(i,1):a.push(v);filters[k]=a;$(`#filter-${k}`).val(a);page=1;renderAll()}
-function reset(){filters={};$('#filters select').val([]);$('#table-search').val('');page=1;renderAll()}
-function summary(rows){if(!rows.length){return emptyState('#executive-summary')}let major=rows.filter(r=>r.classification==='Major').length,minor=rows.filter(r=>r.classification==='Minor').length,open=rows.filter(r=>r.status!=='Closed').length,tc=countBy(rows,'criteria')[0],tl=countBy(rows,'legal')[0];$('#executive-summary').text(`พบ Findings ${rows.length} รายการ จาก ${new Set(rows.map(r=>r.site)).size} สถานประกอบกิจการ และ ${new Set(rows.map(r=>r.cb)).size} CB โดยมี Major ${major} รายการ Minor ${minor} รายการ และรายการที่ไม่พบสถานะ Closed ${open} รายการ ข้อกำหนดที่พบบ่อยที่สุดคือ ${tc?.[0]||'-'} (${tc?.[1]||0}) และกลุ่มกฎหมาย/ข้อกำหนดที่พบมากที่สุดคือ ${tl?.[0]||'-'} (${tl?.[1]||0})`);$('#decision-note').text(major||minor?'ประเด็นเพื่อการติดตาม: ตรวจสอบ Major/Minor ที่ยังไม่มีสถานะ Closed และยืนยันผู้รับผิดชอบ/กำหนดแล้วเสร็จจากแหล่งข้อมูลที่เกี่ยวข้อง':'ไม่พบ Major/Minor ที่ไม่มีสถานะ Closed ตามตัวกรองปัจจุบัน')}
-function kpis(rows){let items=[['Findings',rows.length,'รายการ',''],['สถานประกอบกิจการ',new Set(rows.map(r=>r.site)).size,'แห่ง',''],['CBs',new Set(rows.map(r=>r.cb)).size,'หน่วย',''],['Major',rows.filter(r=>r.classification==='Major').length,'รายการ','alert'],['Minor',rows.filter(r=>r.classification==='Minor').length,'รายการ','warning'],['Closed',rows.filter(r=>r.status==='Closed').length,'รายการ','']];$('#kpi-grid').html(items.map((x,i)=>`<button type="button" class="kpi-card ${x[3]}" ${i===3?'data-filter="classification" data-value="Major"':i===4?'data-filter="classification" data-value="Minor"':i===5?'data-filter="status" data-value="Closed"':''} title="${i===0?'COUNTROWS':i===1?'DISTINCTCOUNT(Audited Site)':i===2?'DISTINCTCOUNT(CB)':'กรองตามค่าที่เลือก'}"><span>${x[0]}</span><strong>${x[1]}</strong><span>${x[2]}</span></button>`).join('')).find('[data-filter]').on('click',function(){setFilter($(this).data('filter'),$(this).data('value'))})}
-function destroy(name){if(charts[name]){charts[name].destroy();delete charts[name]}}function emptyChart(name,selector,caption){destroy(name);$(selector).replaceWith($(selector).clone());$(caption).text('ไม่พบข้อมูลตามเงื่อนไขที่เลือก')}
-function chartClick(key,items){return(evt,elements)=>{if(elements.length)setFilter(key,items[elements[0].index][0])}}
-function renderCharts(rows){renderTrend(rows);renderCB(rows);renderClass(rows);renderPareto(rows)}
-function commonOptions(){return {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},tooltip:{enabled:true}},interaction:{mode:'nearest',intersect:true},onHover:(e,els)=>{e.native.target.style.cursor=els.length?'pointer':'default'}}}
-function renderTrend(rows){destroy('trend');let items=countBy(rows,period).sort((a,b)=>+a[0]-+b[0]);$('#trend-title').text(`แนวโน้ม Findings ราย${period==='month'?'เดือน':'ไตรมาส'} • ${context()}`);if(!items.length)return $('#trend-caption').text('ไม่พบข้อมูลตามเงื่อนไขที่เลือก');charts.trend=new Chart($('#trend-chart')[0],{type:'line',data:{labels:items.map(x=>period==='month'?(labels.month[x[0]]||x[0]):`Q${x[0]}`),datasets:[{label:'Findings (รายการ)',data:items.map(x=>x[1]),borderColor:'#159a9c',backgroundColor:'rgba(21,154,156,.15)',fill:true,tension:.2,pointRadius:5}]},options:{...commonOptions(),onClick:chartClick(period,items),scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});$('#trend-caption').text(`แสดง ${items.length} ช่วงเวลา รวม ${rows.length} รายการ คลิกจุดข้อมูลเพื่อกรอง`);$('#trend-alt').text(items.map(x=>`${x[0]} ${x[1]} รายการ`).join(', '))}
-function renderCB(rows){destroy('cb');let key=cbLevel,groups=countBy(rows,key).slice(0,15),classes=['Observation','Minor','Major'];$('#cb-title').text(`Findings แยกตาม ${key==='cb'?'CB':'สถานประกอบกิจการ'} • ${context()}`);if(!groups.length)return $('#cb-caption').text('ไม่พบข้อมูลตามเงื่อนไขที่เลือก');charts.cb=new Chart($('#cb-chart')[0],{type:'bar',data:{labels:groups.map(x=>x[0]),datasets:classes.map((c,i)=>({label:c,data:groups.map(g=>rows.filter(r=>r[key]===g[0]&&r.classification===c).length),backgroundColor:['#7f8c8d','#f4b400','#d93025'][i]}))},options:{...commonOptions(),indexAxis:'y',onClick:(e,els)=>{if(els.length)setFilter(key,groups[els[0].index][0])},scales:{x:{stacked:true,beginAtZero:true,ticks:{precision:0}},y:{stacked:true}}}});$('#cb-caption').text('จำนวน Findings แยกตามระดับข้อบกพร่อง ไม่ใช้เพื่อจัดอันดับคุณภาพ CB');$('#cb-alt').text(groups.map(x=>`${x[0]} ${x[1]} รายการ`).join(', '))}
-function renderClass(rows){destroy('classification');let items=countBy(rows,'classification'),total=rows.length;$('#classification-title').text(`สัดส่วนระดับข้อบกพร่อง • ${context()}`);if(!items.length)return $('#classification-caption').text('ไม่พบข้อมูลตามเงื่อนไขที่เลือก');charts.classification=new Chart($('#classification-chart')[0],{type:'doughnut',data:{labels:items.map(x=>x[0]),datasets:[{data:items.map(x=>percentMode?+(x[1]/total*100).toFixed(1):x[1]),backgroundColor:items.map(x=>({Observation:'#7f8c8d',Minor:'#f4b400',Major:'#d93025',OFI:'#159a9c'}[x[0]]||'#b4bec9'))}]},options:{...commonOptions(),onClick:chartClick('classification',items)}});$('#classification-caption').text(percentMode?'หน่วย: ร้อยละ':'หน่วย: รายการ');$('#classification-alt').text(items.map(x=>`${x[0]} ${x[1]} รายการ`).join(', '))}
-function renderPareto(rows){destroy('pareto');let items=countBy(rows,'legal').slice(0,12);if(!paretoDesc)items.reverse();let total=items.reduce((a,x)=>a+x[1],0),cum=0,pct=items.map(x=>{cum+=x[1];return +(cum/total*100).toFixed(1)});$('#pareto-title').text(`Pareto กฎหมาย/ข้อกำหนด • ${context()}`);if(!items.length)return $('#pareto-caption').text('ไม่พบข้อมูลตามเงื่อนไขที่เลือก');charts.pareto=new Chart($('#pareto-chart')[0],{data:{labels:items.map(x=>x[0]),datasets:[{type:'bar',label:'จำนวน',data:items.map(x=>x[1]),backgroundColor:'#159a9c',yAxisID:'y'},{type:'line',label:'สะสม (%)',data:pct,borderColor:'#d93025',yAxisID:'p',tension:.2}]},options:{...commonOptions(),onClick:chartClick('legal',items),scales:{y:{beginAtZero:true,ticks:{precision:0}},p:{position:'right',min:0,max:100,grid:{drawOnChartArea:false},ticks:{callback:v=>v+'%'}}}}});$('#pareto-caption').text('แท่งแสดงจำนวน เส้นแสดงสัดส่วนสะสม คลิกแท่งเพื่อกรอง');$('#pareto-alt').text(items.map((x,i)=>`${x[0]} ${x[1]} รายการ สะสม ${pct[i]}%`).join(', '))}
-function alerts(rows){let a=rows.filter(r=>['Major','Minor'].includes(r.classification)&&r.status!=='Closed').sort((x,y)=>(x.classification==='Major'?0:1)-(y.classification==='Major'?0:1));if(!a.length)return $('#alerts-list').html('<p class="empty-state">ไม่พบ Major/Minor ที่ไม่มีสถานะ Closed ตามตัวกรอง</p>');$('#alerts-list').html(a.slice(0,10).map(r=>`<button type="button" class="alert-item ${r.classification.toLowerCase()}" data-id="${r.id}"><span class="badge ${r.classification.toLowerCase()}">${esc(r.classification)}</span><span><strong>${esc(r.site)}</strong><br><small>${esc(r.cb)} • ${esc(r.auditDate)} • Due: ${esc(r.dueDate||'ไม่ระบุในไฟล์')}</small></span><span>ดูรายละเอียด ›</span></button>`).join('')).find('button').on('click',function(){openDetail(+$(this).data('id'))})}
-function table(rows){rows=rows.slice().sort((a,b)=>String(a[sortKey]??'').localeCompare(String(b[sortKey]??''),'th',{numeric:true})*(sortAsc?1:-1));let size=+$('#page-size').val(),pages=Math.max(1,Math.ceil(rows.length/size));page=Math.min(page,pages);let slice=rows.slice((page-1)*size,page*size),cols=[['auditDate','วันที่'],['site','สถานประกอบกิจการ'],['cb','CB'],['criteria','เกณฑ์'],['classification','ระดับ'],['legal','กฎหมาย/ข้อกำหนด'],['status','สถานะ'],['finding','รายละเอียด Finding']];$('#detail-head').html('<tr>'+cols.map(c=>`<th scope="col"><button type="button" data-sort="${c[0]}">${c[1]}${sortKey===c[0]?(sortAsc?' ▲':' ▼'):''}</button></th>`).join('')+'</tr>').find('button').on('click',function(){let k=$(this).data('sort');if(sortKey===k)sortAsc=!sortAsc;else{sortKey=k;sortAsc=true}table(filtered())});$('#detail-body').html(slice.length?slice.map(r=>`<tr tabindex="0" data-id="${r.id}">${cols.map(c=>`<td class="${c[0]==='finding'?'wide-cell':''}">${['classification','status'].includes(c[0])?badge(r[c[0]]):esc(r[c[0]]||'ไม่ระบุในไฟล์')}</td>`).join('')}</tr>`).join(''):'<tr><td colspan="8" class="empty-state">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</td></tr>').find('tr[data-id]').on('click keydown',function(e){if(e.type==='click'||e.key==='Enter'||e.key===' '){e.preventDefault();openDetail(+$(this).data('id'))}});$('#page-info').text(`หน้า ${page}/${pages} • ${rows.length} รายการ`);$('#page-prev').prop('disabled',page<=1);$('#page-next').prop('disabled',page>=pages)}function badge(v){let c=v==='Major'?'major':v==='Minor'?'minor':v==='Closed'?'closed':'open';return `<span class="badge ${c}">${esc(v)}</span>`}
-function openDetail(id){let r=data.find(x=>x.id===id);if(!r)return;$('#detail-dialog-title').text(`${r.classification} • ${r.site}`);let facts=[['Audit Date',r.auditDate],['CB',r.cb],['Business Area',r.ba],['Business Unit',r.bu],['Audit Type',r.auditType],['Criteria',r.criteria],['Legal Requirement',r.legal],['Due Date',r.dueDate||'ไม่ระบุในไฟล์'],['Status',r.status]];$('#detail-dialog-body').html(`<div class="detail-grid">${facts.map(x=>`<div class="detail-block"><strong>${x[0]}</strong>${esc(x[1])}</div>`).join('')}</div><section><h3>Finding</h3><p>${esc(r.finding||'ไม่ระบุในไฟล์')}</p><h3>Objective Evidence</h3><p>${esc(r.evidence||'ไม่ระบุในไฟล์')}</p><h3>Auditor(s)</h3><p>${esc(r.auditors||'ไม่ระบุในไฟล์')}</p></section>`);$('#detail-dialog')[0].showModal()}
-function emptyState(sel){$(sel).html('ไม่พบข้อมูลตามเงื่อนไขที่เลือก <button type="button" id="empty-reset">ล้างตัวกรอง</button>');$('#empty-reset').on('click',reset)}function renderAll(){let rows=filtered();$('#record-count').text(rows.length);$('#active-filters').text(context());summary(rows);kpis(rows);renderCharts(rows);alerts(rows);table(rows)}
-function mappingDialog(){let all={...TLSDataLoader.REQUIRED,...TLSDataLoader.OPTIONAL},opts=inspection.headers.map(h=>`<option value="${esc(h)}">${esc(h)}</option>`).join('');$('#mapping-fields').html(Object.entries(all).map(([k])=>`<div class="mapping-row"><label for="map-${k}">${k}${TLSDataLoader.REQUIRED[k]?' *':''}</label><select id="map-${k}" data-key="${k}"><option value="">ไม่ระบุ</option>${opts}</select></div>`).join(''));Object.entries(inspection.map).forEach(([k,v])=>$(`#map-${k}`).val(v));$('#mapping-dialog')[0].showModal()}
-function applyMapping(){let map={};$('#mapping-fields select').each(function(){map[$(this).data('key')]=$(this).val()});let missing=Object.keys(TLSDataLoader.REQUIRED).filter(k=>!map[k]);if(missing.length){status('กรุณาจับคู่คอลัมน์จำเป็น: '+missing.join(', '),true);return false}data=TLSDataLoader.convert(inspection.objects,map);if(!data.length){status('ไม่พบ Record ที่ครบ Audit Date, Site, Classification และ CB',true);return false}let q=TLSDataLoader.quality(data);renderFilters();reset();$('#record-count').text(data.length);$('#latest-date').text(data.map(r=>r.dateSort).filter(Boolean).sort().at(-1)||'รอตรวจสอบ');$('#refresh-time').text(new Date().toLocaleString('th-TH'));$('#export-csv').prop('disabled',false);status(`โหลดสำเร็จ ${data.length} Records • Duplicate ${q.duplicates} • Missing Ref ${q.missingRef} • Missing Due Date ${q.missingDue}`);return true}
-function exportCSV(){let rows=filtered(),cols=['auditDate','ba','bu','site','auditType','criteria','classification','cb','legal','dueDate','status','finding'],q=v=>'"'+String(v??'').replace(/"/g,'""')+'"',csv='\ufeff'+cols.map(q).join(',')+'\n'+rows.map(r=>cols.map(c=>q(r[c])).join(',')).join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='TLS8001_filtered.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
-$(async function(){try{ensureLibraries();status('พร้อมใช้งาน กรุณาเลือกไฟล์ Excel')}catch(e){status(e.message+' กำลังลอง Offline Fallback',true);return}$('#excel-file').on('change',async function(){try{status('กำลังอ่านไฟล์...');workbook=await TLSDataLoader.loadFile(this.files[0]);$('#sheet-select').html(workbook.SheetNames.map(n=>`<option>${esc(n)}</option>`).join('')).prop('disabled',false);$('#load-sheet').prop('disabled',false);let preferred=workbook.SheetNames.includes('NC_Log')?'NC_Log':workbook.SheetNames[0];$('#sheet-select').val(preferred);status(`พบ ${workbook.SheetNames.length} Sheets กรุณาเลือก Sheet แล้วกดอ่าน Sheet`)}catch(e){status(e.message,true)}});$('#load-sheet').on('click',function(){try{inspection=TLSDataLoader.inspectSheet(workbook,$('#sheet-select').val());mappingDialog()}catch(e){status(e.message,true)}});$('#apply-mapping').on('click',function(e){e.preventDefault();if(applyMapping())$('#mapping-dialog')[0].close()});$('#reset-all').on('click',reset);$('#export-csv').on('click',exportCSV);$('#print-summary').on('click',()=>print());$('#close-detail').on('click',()=>$('#detail-dialog')[0].close());$('#table-search').on('input',debounce(()=>{page=1;renderAll()}));$('#page-size').on('change',()=>{page=1;table(filtered())});$('#page-prev').on('click',()=>{if(page>1){page--;table(filtered())}});$('#page-next').on('click',()=>{page++;table(filtered())});$('.view-toggle').on('click',function(){period=$(this).data('view');renderTrend(filtered())});$('#cb-drill').on('click',()=>{cbLevel=cbLevel==='cb'?'site':'cb';renderCB(filtered())});$('#classification-toggle').on('click',function(){percentMode=!percentMode;$(this).text(percentMode?'ร้อยละ':'จำนวน');renderClass(filtered())});$('#pareto-sort').on('click',function(){paretoDesc=!paretoDesc;$(this).text(paretoDesc?'มาก → น้อย':'น้อย → มาก');renderPareto(filtered())})});
-})(jQuery,window);
+/**
+ * TLS Audit Dashboard | Dashboard Controller
+ * ------------------------------------------------------------
+ * Purpose:
+ * - Keep UI state, filters, charts, table rendering and export actions in one controller.
+ * - Use jQuery 4.0.0 as a DOM/event utility layer only.
+ * - Keep workbook parsing and record normalization in assets/js/data-loader.js.
+ *
+ * Teaching Structure:
+ * 1. Configuration and state
+ * 2. Utility helpers
+ * 3. Filter rendering and state changes
+ * 4. Summary, KPI, chart, alert and table rendering
+ * 5. Dialog, export and workbook import flows
+ * 6. Event binding and bootstrap
+ */
+(function ($, global) {
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // 1) Configuration and state
+  // ---------------------------------------------------------------------------
+
+  const FILTER_DEFINITIONS = [
+    ['year', 'ปี'],
+    ['quarter', 'ไตรมาส'],
+    ['month', 'เดือน'],
+    ['cb', 'Certification Body'],
+    ['classification', 'ระดับข้อบกพร่อง'],
+    ['ba', 'Business Area'],
+    ['bu', 'Business Unit'],
+    ['site', 'สถานประกอบกิจการ'],
+    ['auditType', 'ประเภทการตรวจ'],
+    ['criteria', 'เกณฑ์การตรวจ'],
+    ['legal', 'กฎหมาย / ข้อกำหนด'],
+    ['status', 'สถานะ Corrective Action']
+  ];
+
+  const TABLE_COLUMNS = [
+    ['auditDate', 'วันที่'],
+    ['site', 'สถานประกอบกิจการ'],
+    ['cb', 'CB'],
+    ['criteria', 'เกณฑ์'],
+    ['classification', 'ระดับ'],
+    ['legal', 'กฎหมาย/ข้อกำหนด'],
+    ['status', 'สถานะ'],
+    ['finding', 'รายละเอียด Finding']
+  ];
+
+  const MONTH_LABELS = {
+    '1': 'ม.ค.',
+    '2': 'ก.พ.',
+    '3': 'มี.ค.',
+    '4': 'เม.ย.',
+    '5': 'พ.ค.',
+    '6': 'มิ.ย.',
+    '7': 'ก.ค.',
+    '8': 'ส.ค.',
+    '9': 'ก.ย.',
+    '10': 'ต.ค.',
+    '11': 'พ.ย.',
+    '12': 'ธ.ค.'
+  };
+
+  const CLASSIFICATION_COLORS = {
+    Observation: '#7f8c8d',
+    Minor: '#f4b400',
+    Major: '#d93025',
+    OFI: '#159a9c'
+  };
+
+  const app = {
+    workbook: null,
+    inspection: null,
+    data: [],
+    filters: {},
+    charts: {},
+    page: 1,
+    sortKey: 'dateSort',
+    sortAsc: false,
+    period: 'month',
+    cbLevel: 'cb',
+    percentMode: false,
+    paretoDesc: true
+  };
+
+  // ---------------------------------------------------------------------------
+  // 2) Utility helpers
+  // ---------------------------------------------------------------------------
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, function (char) {
+      return ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      })[char];
+    });
+  }
+
+  function setStatus(message, isError = false) {
+    $('#status-message').text(message).toggleClass('error', isError);
+  }
+
+  function debounce(fn, wait = 180) {
+    let timer;
+
+    return function (...args) {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        fn(...args);
+      }, wait);
+    };
+  }
+
+  function uniqueSorted(values) {
+    return [...new Set(values.filter(Boolean))].sort(function (a, b) {
+      return String(a).localeCompare(String(b), 'th', { numeric: true });
+    });
+  }
+
+  function selectedValues(key) {
+    return app.filters[key] || [];
+  }
+
+  function displayLabel(key, value) {
+    if (key === 'month') return MONTH_LABELS[value] || value;
+    if (key === 'quarter') return `Q${value}`;
+    return value;
+  }
+
+  function groupCount(rows, key) {
+    const counts = {};
+
+    rows.forEach(function (row) {
+      const value = row[key] || 'ไม่ระบุ';
+      counts[value] = (counts[value] || 0) + 1;
+    });
+
+    return Object.entries(counts).sort(function (a, b) {
+      return b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), 'th');
+    });
+  }
+
+  function activeFilterText() {
+    const active = FILTER_DEFINITIONS
+      .filter(function ([key]) {
+        return selectedValues(key).length > 0;
+      })
+      .map(function ([key, label]) {
+        return `${label}: ${selectedValues(key).map(function (value) {
+          return displayLabel(key, value);
+        }).join(', ')}`;
+      });
+
+    return active.length ? active.join(' • ') : 'ทั้งหมด';
+  }
+
+  function filteredRows() {
+    const query = $('#table-search').val().trim().toLowerCase();
+
+    return app.data.filter(function (row) {
+      const matchesFilters = FILTER_DEFINITIONS.every(function ([key]) {
+        const values = selectedValues(key);
+        return !values.length || values.includes(row[key]);
+      });
+
+      const matchesSearch = !query || Object.values(row).join(' ').toLowerCase().includes(query);
+      return matchesFilters && matchesSearch;
+    });
+  }
+
+  function ensureLibraries() {
+    if (!global.jQuery) throw new Error('jQuery 4.0.0 ไม่พร้อมใช้งาน');
+    if (!global.Chart) throw new Error('Chart.js ไม่พร้อมใช้งาน');
+    if (!global.XLSX) throw new Error('SheetJS ไม่พร้อมใช้งาน');
+    if (!global.TLSDataLoader) throw new Error('TLSDataLoader ไม่พร้อมใช้งาน');
+  }
+
+  function destroyChart(name) {
+    if (app.charts[name]) {
+      app.charts[name].destroy();
+      delete app.charts[name];
+    }
+  }
+
+  function emptyState(selector, message = 'ไม่พบข้อมูลตามเงื่อนไขที่เลือก') {
+    $(selector).html(`<span class="empty-state">${escapeHtml(message)}</span>`);
+  }
+
+  function badge(value) {
+    const key = String(value || '').toLowerCase();
+    let className = 'open';
+
+    if (key.includes('major')) className = 'major';
+    else if (key.includes('minor')) className = 'minor';
+    else if (key === 'closed') className = 'closed';
+
+    return `<span class="badge ${className}">${escapeHtml(value || 'ไม่ระบุ')}</span>`;
+  }
+
+  function formatRowsForAltText(items) {
+    return items.map(function ([label, count]) {
+      return `${label} ${count} รายการ`;
+    }).join(', ');
+  }
+
+  // ---------------------------------------------------------------------------
+  // 3) Filter rendering and state changes
+  // ---------------------------------------------------------------------------
+
+  function renderFilters() {
+    const html = FILTER_DEFINITIONS.map(function ([key, label]) {
+      const options = uniqueSorted(app.data.map(function (row) {
+        return row[key];
+      })).map(function (value) {
+        return `<option value="${escapeHtml(value)}">${escapeHtml(displayLabel(key, value))}</option>`;
+      }).join('');
+
+      return `
+        <div class="filter-field">
+          <label for="filter-${key}">${escapeHtml(label)}</label>
+          <select id="filter-${key}" data-key="${key}" multiple>${options}</select>
+        </div>`;
+    }).join('');
+
+    $('#filters')
+      .html(html)
+      .find('select')
+      .on('change', function () {
+        app.filters[$(this).data('key')] = $(this).val() || [];
+        app.page = 1;
+        renderAll();
+      });
+  }
+
+  function setFilter(key, value) {
+    const values = selectedValues(key).slice();
+    const index = values.indexOf(value);
+
+    if (index >= 0) values.splice(index, 1);
+    else values.push(value);
+
+    app.filters[key] = values;
+    $(`#filter-${key}`).val(values);
+    app.page = 1;
+    renderAll();
+  }
+
+  function resetDashboard() {
+    app.filters = {};
+    app.page = 1;
+
+    $('#filters select').val([]);
+    $('#table-search').val('');
+    renderAll();
+  }
+
+  function renderActiveFilters() {
+    $('#active-filters').text(activeFilterText());
+  }
+
+  // ---------------------------------------------------------------------------
+  // 4) Summary, KPI, chart, alert and table rendering
+  // ---------------------------------------------------------------------------
+
+  function renderSummary(rows) {
+    if (!rows.length) {
+      emptyState('#executive-summary', 'ไม่พบข้อมูลตามตัวกรองปัจจุบัน');
+      $('#decision-note').text('');
+      return;
+    }
+
+    const major = rows.filter(function (row) { return row.classification === 'Major'; }).length;
+    const minor = rows.filter(function (row) { return row.classification === 'Minor'; }).length;
+    const open = rows.filter(function (row) { return row.status !== 'Closed'; }).length;
+    const topCriteria = groupCount(rows, 'criteria')[0];
+    const topLegal = groupCount(rows, 'legal')[0];
+
+    $('#executive-summary').text(
+      `พบ Findings ${rows.length} รายการ จาก ${new Set(rows.map(function (row) { return row.site; })).size} ` +
+      `สถานประกอบกิจการ และ ${new Set(rows.map(function (row) { return row.cb; })).size} CB ` +
+      `โดยมี Major ${major} รายการ Minor ${minor} รายการ และรายการที่ไม่พบสถานะ Closed ${open} รายการ ` +
+      `ข้อกำหนดที่พบบ่อยที่สุดคือ ${topCriteria?.[0] || '-'} (${topCriteria?.[1] || 0}) ` +
+      `และกลุ่มกฎหมาย/ข้อกำหนดที่พบมากที่สุดคือ ${topLegal?.[0] || '-'} (${topLegal?.[1] || 0})`
+    );
+
+    $('#decision-note').text(
+      major || minor
+        ? 'ประเด็นเพื่อการติดตาม: ตรวจสอบ Major/Minor ที่ยังไม่มีสถานะ Closed และยืนยันผู้รับผิดชอบ/กำหนดแล้วเสร็จจากแหล่งข้อมูลที่เกี่ยวข้อง'
+        : 'ไม่พบ Major/Minor ที่ไม่มีสถานะ Closed ตามตัวกรองปัจจุบัน'
+    );
+  }
+
+  function renderKpis(rows) {
+    const items = [
+      ['Findings', rows.length, 'รายการ', '', '', 'COUNTROWS'],
+      ['สถานประกอบกิจการ', new Set(rows.map(function (row) { return row.site; })).size, 'แห่ง', '', '', 'DISTINCTCOUNT(Audited Site)'],
+      ['CBs', new Set(rows.map(function (row) { return row.cb; })).size, 'หน่วย', '', '', 'DISTINCTCOUNT(CB)'],
+      ['Major', rows.filter(function (row) { return row.classification === 'Major'; }).length, 'รายการ', 'alert', 'classification', 'Major'],
+      ['Minor', rows.filter(function (row) { return row.classification === 'Minor'; }).length, 'รายการ', 'warning', 'classification', 'Minor'],
+      ['Closed', rows.filter(function (row) { return row.status === 'Closed'; }).length, 'รายการ', '', 'status', 'Closed']
+    ];
+
+    const html = items.map(function ([label, value, unit, className, filterKey, filterValue]) {
+      const filterAttrs = filterKey ? `data-filter="${filterKey}" data-value="${escapeHtml(filterValue)}"` : '';
+      const title = filterKey ? 'กรองตามค่าที่เลือก' : filterValue;
+
+      return `
+        <button type="button" class="kpi-card ${className}" ${filterAttrs} title="${escapeHtml(title)}">
+          <span>${escapeHtml(label)}</span>
+          <strong>${value}</strong>
+          <span>${escapeHtml(unit)}</span>
+        </button>`;
+    }).join('');
+
+    $('#kpi-grid')
+      .html(html)
+      .find('[data-filter]')
+      .on('click', function () {
+        setFilter($(this).data('filter'), $(this).data('value'));
+      });
+  }
+
+  function commonChartOptions() {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { enabled: true }
+      },
+      interaction: { mode: 'nearest', intersect: true },
+      onHover: function (event, elements) {
+        event.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+      }
+    };
+  }
+
+  function renderTrendChart(rows) {
+    destroyChart('trend');
+
+    const items = groupCount(rows, app.period).sort(function (a, b) {
+      return Number(a[0]) - Number(b[0]);
+    });
+
+    $('#trend-title').text(`แนวโน้ม Findings ราย${app.period === 'month' ? 'เดือน' : 'ไตรมาส'} • ${activeFilterText()}`);
+
+    if (!items.length) {
+      $('#trend-caption').text('ไม่พบข้อมูลตามเงื่อนไขที่เลือก');
+      $('#trend-alt').text('');
+      return;
+    }
+
+    app.charts.trend = new Chart($('#trend-chart')[0], {
+      type: 'line',
+      data: {
+        labels: items.map(function ([label]) {
+          return app.period === 'month' ? (MONTH_LABELS[label] || label) : `Q${label}`;
+        }),
+        datasets: [{
+          label: 'Findings (รายการ)',
+          data: items.map(function ([, count]) { return count; }),
+          borderColor: '#159a9c',
+          backgroundColor: 'rgba(21,154,156,.15)',
+          fill: true,
+          tension: 0.2,
+          pointRadius: 5
+        }]
+      },
+      options: {
+        ...commonChartOptions(),
+        onClick: function (event, elements) {
+          if (elements.length) setFilter(app.period, items[elements[0].index][0]);
+        },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+
+    $('#trend-caption').text(`แสดง ${items.length} ช่วงเวลา รวม ${rows.length} รายการ คลิกจุดข้อมูลเพื่อกรอง`);
+    $('#trend-alt').text(formatRowsForAltText(items));
+  }
+
+  function renderCbChart(rows) {
+    destroyChart('cb');
+
+    const key = app.cbLevel;
+    const groups = groupCount(rows, key).slice(0, 15);
+    const classes = ['Observation', 'Minor', 'Major'];
+
+    $('#cb-title').text(`Findings แยกตาม ${key === 'cb' ? 'CB' : 'สถานประกอบกิจการ'} • ${activeFilterText()}`);
+
+    if (!groups.length) {
+      $('#cb-caption').text('ไม่พบข้อมูลตามเงื่อนไขที่เลือก');
+      $('#cb-alt').text('');
+      return;
+    }
+
+    app.charts.cb = new Chart($('#cb-chart')[0], {
+      type: 'bar',
+      data: {
+        labels: groups.map(function ([label]) { return label; }),
+        datasets: classes.map(function (classification) {
+          return {
+            label: classification,
+            data: groups.map(function ([label]) {
+              return rows.filter(function (row) {
+                return row[key] === label && row.classification === classification;
+              }).length;
+            }),
+            backgroundColor: CLASSIFICATION_COLORS[classification]
+          };
+        })
+      },
+      options: {
+        ...commonChartOptions(),
+        indexAxis: 'y',
+        onClick: function (event, elements) {
+          if (elements.length) setFilter(key, groups[elements[0].index][0]);
+        },
+        scales: {
+          x: { stacked: true, beginAtZero: true, ticks: { precision: 0 } },
+          y: { stacked: true }
+        }
+      }
+    });
+
+    $('#cb-caption').text('จำนวน Findings แยกตามระดับข้อบกพร่อง ไม่ใช้เพื่อจัดอันดับคุณภาพ CB');
+    $('#cb-alt').text(formatRowsForAltText(groups));
+  }
+
+  function renderClassificationChart(rows) {
+    destroyChart('classification');
+
+    const items = groupCount(rows, 'classification');
+    const total = rows.length;
+
+    $('#classification-title').text(`สัดส่วนระดับข้อบกพร่อง • ${activeFilterText()}`);
+
+    if (!items.length) {
+      $('#classification-caption').text('ไม่พบข้อมูลตามเงื่อนไขที่เลือก');
+      $('#classification-alt').text('');
+      return;
+    }
+
+    app.charts.classification = new Chart($('#classification-chart')[0], {
+      type: 'doughnut',
+      data: {
+        labels: items.map(function ([label]) { return label; }),
+        datasets: [{
+          data: items.map(function ([, count]) {
+            return app.percentMode ? Number((count / total * 100).toFixed(1)) : count;
+          }),
+          backgroundColor: items.map(function ([label]) {
+            return CLASSIFICATION_COLORS[label] || '#b4bec9';
+          })
+        }]
+      },
+      options: {
+        ...commonChartOptions(),
+        onClick: function (event, elements) {
+          if (elements.length) setFilter('classification', items[elements[0].index][0]);
+        }
+      }
+    });
+
+    $('#classification-caption').text(app.percentMode ? 'หน่วย: ร้อยละ' : 'หน่วย: รายการ');
+    $('#classification-alt').text(formatRowsForAltText(items));
+  }
+
+  function renderParetoChart(rows) {
+    destroyChart('pareto');
+
+    const items = groupCount(rows, 'legal').slice(0, 12);
+    if (!app.paretoDesc) items.reverse();
+
+    const total = items.reduce(function (sum, [, count]) {
+      return sum + count;
+    }, 0);
+
+    let cumulative = 0;
+    const cumulativePct = items.map(function ([, count]) {
+      cumulative += count;
+      return Number((cumulative / total * 100).toFixed(1));
+    });
+
+    $('#pareto-title').text(`Pareto กฎหมาย/ข้อกำหนด • ${activeFilterText()}`);
+
+    if (!items.length) {
+      $('#pareto-caption').text('ไม่พบข้อมูลตามเงื่อนไขที่เลือก');
+      $('#pareto-alt').text('');
+      return;
+    }
+
+    app.charts.pareto = new Chart($('#pareto-chart')[0], {
+      data: {
+        labels: items.map(function ([label]) { return label; }),
+        datasets: [
+          {
+            type: 'bar',
+            label: 'จำนวน',
+            data: items.map(function ([, count]) { return count; }),
+            backgroundColor: '#159a9c',
+            yAxisID: 'y'
+          },
+          {
+            type: 'line',
+            label: 'สะสม (%)',
+            data: cumulativePct,
+            borderColor: '#d93025',
+            yAxisID: 'p',
+            tension: 0.2
+          }
+        ]
+      },
+      options: {
+        ...commonChartOptions(),
+        onClick: function (event, elements) {
+          if (elements.length) setFilter('legal', items[elements[0].index][0]);
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 } },
+          p: {
+            position: 'right',
+            min: 0,
+            max: 100,
+            grid: { drawOnChartArea: false },
+            ticks: { callback: function (value) { return value + '%'; } }
+          }
+        }
+      }
+    });
+
+    $('#pareto-caption').text('แท่งแสดงจำนวน เส้นแสดงสัดส่วนสะสม คลิกแท่งเพื่อกรอง');
+    $('#pareto-alt').text(items.map(function ([label, count], index) {
+      return `${label} ${count} รายการ สะสม ${cumulativePct[index]}%`;
+    }).join(', '));
+  }
+
+  function renderCharts(rows) {
+    renderTrendChart(rows);
+    renderCbChart(rows);
+    renderClassificationChart(rows);
+    renderParetoChart(rows);
+  }
+
+  function renderAlerts(rows) {
+    const alerts = rows
+      .filter(function (row) {
+        return ['Major', 'Minor'].includes(row.classification) && row.status !== 'Closed';
+      })
+      .sort(function (a, b) {
+        return (a.classification === 'Major' ? 0 : 1) - (b.classification === 'Major' ? 0 : 1);
+      });
+
+    if (!alerts.length) {
+      $('#alerts-list').html('<p class="empty-state">ไม่พบ Major/Minor ที่ไม่มีสถานะ Closed ตามตัวกรอง</p>');
+      return;
+    }
+
+    const html = alerts.slice(0, 10).map(function (row) {
+      return `
+        <button type="button" class="alert-item ${row.classification.toLowerCase()}" data-id="${row.id}">
+          <span class="badge ${row.classification.toLowerCase()}">${escapeHtml(row.classification)}</span>
+          <span>
+            <strong>${escapeHtml(row.site)}</strong><br>
+            <small>${escapeHtml(row.cb)} • ${escapeHtml(row.auditDate)} • Due: ${escapeHtml(row.dueDate || 'ไม่ระบุในไฟล์')}</small>
+          </span>
+          <span>ดูรายละเอียด ›</span>
+        </button>`;
+    }).join('');
+
+    $('#alerts-list')
+      .html(html)
+      .find('button')
+      .on('click', function () {
+        openDetail(Number($(this).data('id')));
+      });
+  }
+
+  function renderTable(rows) {
+    const pageSize = Number($('#page-size').val());
+    const sortedRows = rows.slice().sort(function (a, b) {
+      return String(a[app.sortKey] ?? '').localeCompare(String(b[app.sortKey] ?? ''), 'th', { numeric: true }) * (app.sortAsc ? 1 : -1);
+    });
+
+    const pages = Math.max(1, Math.ceil(sortedRows.length / pageSize));
+    app.page = Math.min(app.page, pages);
+
+    const visibleRows = sortedRows.slice((app.page - 1) * pageSize, app.page * pageSize);
+
+    const headHtml = '<tr>' + TABLE_COLUMNS.map(function ([key, label]) {
+      const direction = app.sortKey === key ? (app.sortAsc ? ' ▲' : ' ▼') : '';
+      return `<th scope="col"><button type="button" data-sort="${key}">${escapeHtml(label)}${direction}</button></th>`;
+    }).join('') + '</tr>';
+
+    $('#detail-head')
+      .html(headHtml)
+      .find('button')
+      .on('click', function () {
+        const key = $(this).data('sort');
+
+        if (app.sortKey === key) app.sortAsc = !app.sortAsc;
+        else {
+          app.sortKey = key;
+          app.sortAsc = true;
+        }
+
+        renderTable(filteredRows());
+      });
+
+    const bodyHtml = visibleRows.length
+      ? visibleRows.map(function (row) {
+        const cells = TABLE_COLUMNS.map(function ([key]) {
+          const className = key === 'finding' ? 'wide-cell' : '';
+          const value = ['classification', 'status'].includes(key) ? badge(row[key]) : escapeHtml(row[key] || 'ไม่ระบุในไฟล์');
+          return `<td class="${className}">${value}</td>`;
+        }).join('');
+
+        return `<tr tabindex="0" data-id="${row.id}">${cells}</tr>`;
+      }).join('')
+      : '<tr><td colspan="8" class="empty-state">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</td></tr>';
+
+    $('#detail-body')
+      .html(bodyHtml)
+      .find('tr[data-id]')
+      .on('click keydown', function (event) {
+        if (event.type === 'click' || event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openDetail(Number($(this).data('id')));
+        }
+      });
+
+    $('#page-info').text(`${sortedRows.length} รายการ • หน้า ${app.page}/${pages}`);
+    $('#page-prev').prop('disabled', app.page <= 1);
+    $('#page-next').prop('disabled', app.page >= pages);
+  }
+
+  function renderMetadata(rows) {
+    const latest = rows
+      .map(function (row) { return row.dateSort; })
+      .filter(Boolean)
+      .sort()
+      .pop();
+
+    $('#latest-date').text(latest || 'ไม่พบวันที่');
+    $('#refresh-time').text(new Date().toLocaleString('th-TH'));
+    $('#record-count').text(rows.length);
+  }
+
+  function renderAll() {
+    const rows = filteredRows();
+
+    renderActiveFilters();
+    renderMetadata(rows);
+    renderSummary(rows);
+    renderKpis(rows);
+    renderCharts(rows);
+    renderAlerts(rows);
+    renderTable(rows);
+  }
+
+  // ---------------------------------------------------------------------------
+  // 5) Dialog, export and workbook import flows
+  // ---------------------------------------------------------------------------
+
+  function renderMappingFields() {
+    const requiredKeys = Object.keys(global.TLSDataLoader.REQUIRED);
+    const optionalKeys = Object.keys(global.TLSDataLoader.OPTIONAL);
+    const keys = requiredKeys.concat(optionalKeys);
+
+    const html = keys.map(function (key) {
+      const names = global.TLSDataLoader.REQUIRED[key] || global.TLSDataLoader.OPTIONAL[key] || [key];
+      const label = names[0];
+      const selected = app.inspection.map[key] || '';
+      const options = [''].concat(app.inspection.headers).map(function (header) {
+        const selectedAttr = header === selected ? 'selected' : '';
+        return `<option value="${escapeHtml(header)}" ${selectedAttr}>${escapeHtml(header || 'ไม่เลือก')}</option>`;
+      }).join('');
+
+      return `
+        <div class="mapping-row">
+          <label for="map-${key}">${escapeHtml(label)}</label>
+          <select id="map-${key}" data-map-key="${key}">${options}</select>
+        </div>`;
+    }).join('');
+
+    $('#mapping-fields').html(html);
+  }
+
+  function openMappingDialog() {
+    renderMappingFields();
+    $('#mapping-dialog')[0].showModal();
+  }
+
+  function applyMapping() {
+    const map = { ...app.inspection.map };
+
+    $('#mapping-fields select').each(function () {
+      const key = $(this).data('map-key');
+      const value = $(this).val();
+
+      if (value) map[key] = value;
+      else delete map[key];
+    });
+
+    loadMappedRecords(map);
+  }
+
+  function loadMappedRecords(map) {
+    const required = Object.keys(global.TLSDataLoader.REQUIRED);
+    const missing = required.filter(function (key) {
+      return !map[key];
+    });
+
+    if (missing.length) {
+      setStatus(`กรุณา map field ที่จำเป็นให้ครบ: ${missing.join(', ')}`, true);
+      openMappingDialog();
+      return;
+    }
+
+    app.data = global.TLSDataLoader.convert(app.inspection.objects, map);
+    app.filters = {};
+    app.page = 1;
+
+    const quality = global.TLSDataLoader.quality(app.data);
+
+    renderFilters();
+    renderAll();
+
+    $('#export-csv').prop('disabled', !app.data.length);
+    setStatus(`อ่านข้อมูลสำเร็จ ${quality.records} records • duplicates ${quality.duplicates} • invalid date ${quality.invalidDate}`);
+  }
+
+  function openDetail(id) {
+    const row = app.data.find(function (item) {
+      return item.id === id;
+    });
+
+    if (!row) return;
+
+    const html = Object.entries(row).map(function ([key, value]) {
+      return `
+        <div class="detail-block">
+          <strong>${escapeHtml(key)}</strong>
+          <span>${escapeHtml(value || 'ไม่ระบุในไฟล์')}</span>
+        </div>`;
+    }).join('');
+
+    $('#detail-dialog-title').text(`รายละเอียด Record #${row.id}`);
+    $('#detail-dialog-body').html(`<div class="detail-grid">${html}</div>`);
+    $('#detail-dialog')[0].showModal();
+  }
+
+  function exportCsv() {
+    const rows = filteredRows();
+    if (!rows.length) {
+      setStatus('ไม่พบข้อมูลสำหรับ Export', true);
+      return;
+    }
+
+    const keys = TABLE_COLUMNS.map(function ([key]) { return key; });
+    const lines = [keys.join(',')].concat(rows.map(function (row) {
+      return keys.map(function (key) {
+        const value = String(row[key] ?? '').replace(/"/g, '""');
+        return `"${value}"`;
+      }).join(',');
+    }));
+
+    const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = 'tls-audit-dashboard-filtered.csv';
+    link.click();
+
+    URL.revokeObjectURL(url);
+    setStatus(`Export CSV สำเร็จ ${rows.length} รายการ`);
+  }
+
+  async function handleFileSelected(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      ensureLibraries();
+      app.workbook = await global.TLSDataLoader.loadFile(file);
+
+      const options = app.workbook.SheetNames.map(function (name) {
+        return `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+      }).join('');
+
+      $('#sheet-select').html(options).prop('disabled', false);
+      $('#load-sheet').prop('disabled', false);
+      $('#export-csv').prop('disabled', true);
+
+      setStatus(`โหลดไฟล์สำเร็จ: ${file.name} • พบ ${app.workbook.SheetNames.length} sheet`);
+    } catch (error) {
+      setStatus(error.message, true);
+    }
+  }
+
+  function handleLoadSheet() {
+    try {
+      ensureLibraries();
+
+      const sheetName = $('#sheet-select').val();
+      app.inspection = global.TLSDataLoader.inspectSheet(app.workbook, sheetName);
+
+      const required = Object.keys(global.TLSDataLoader.REQUIRED);
+      const missing = required.filter(function (key) {
+        return !app.inspection.map[key];
+      });
+
+      if (missing.length) openMappingDialog();
+      else loadMappedRecords(app.inspection.map);
+    } catch (error) {
+      setStatus(error.message, true);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // 6) Event binding and bootstrap
+  // ---------------------------------------------------------------------------
+
+  function bindEvents() {
+    $('#excel-file').on('change', handleFileSelected);
+    $('#load-sheet').on('click', handleLoadSheet);
+    $('#reset-all').on('click', resetDashboard);
+    $('#export-csv').on('click', exportCsv);
+    $('#print-summary').on('click', function () { global.print(); });
+
+    $('#table-search').on('input', debounce(function () {
+      app.page = 1;
+      renderAll();
+    }));
+
+    $('#page-size').on('change', function () {
+      app.page = 1;
+      renderTable(filteredRows());
+    });
+
+    $('#page-prev').on('click', function () {
+      app.page = Math.max(1, app.page - 1);
+      renderTable(filteredRows());
+    });
+
+    $('#page-next').on('click', function () {
+      app.page += 1;
+      renderTable(filteredRows());
+    });
+
+    $('.view-toggle').on('click', function () {
+      app.period = $(this).data('view');
+      $('.view-toggle').attr('aria-pressed', 'false');
+      $(this).attr('aria-pressed', 'true');
+      renderTrendChart(filteredRows());
+    });
+
+    $('#cb-drill').on('click', function () {
+      app.cbLevel = app.cbLevel === 'cb' ? 'site' : 'cb';
+      $(this).text(app.cbLevel === 'cb' ? 'Drill-down' : 'Back to CB');
+      renderCbChart(filteredRows());
+    });
+
+    $('#classification-toggle').on('click', function () {
+      app.percentMode = !app.percentMode;
+      $(this).text(app.percentMode ? 'ร้อยละ' : 'จำนวน');
+      renderClassificationChart(filteredRows());
+    });
+
+    $('#pareto-sort').on('click', function () {
+      app.paretoDesc = !app.paretoDesc;
+      $(this).text(app.paretoDesc ? 'มาก → น้อย' : 'น้อย → มาก');
+      renderParetoChart(filteredRows());
+    });
+
+    $('#apply-mapping').on('click', function (event) {
+      event.preventDefault();
+      applyMapping();
+      $('#mapping-dialog')[0].close();
+    });
+
+    $('#close-detail').on('click', function () {
+      $('#detail-dialog')[0].close();
+    });
+  }
+
+  $(function () {
+    try {
+      ensureLibraries();
+      bindEvents();
+      setStatus('กรุณาเลือกไฟล์ Excel เพื่อเริ่มต้น');
+    } catch (error) {
+      setStatus(error.message, true);
+    }
+  });
+})(jQuery, window);
